@@ -123,7 +123,7 @@ export default function LoginPage() {
           variants={sectionVariants}
         >
           <img
-            src="/AuthPages/loginpage.jpeg"
+            src="/AuthPages/login.jpeg"
             alt="Login sidebar"
             className="h-full w-full object-cover"
           />

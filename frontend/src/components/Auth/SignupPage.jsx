@@ -176,7 +176,7 @@ export default function SignUpPage() {
           variants={sectionVariants}
         >
           <img
-            src="/AuthPages/signuppage.png"
+            src="/AuthPages/signup.jpeg"
             alt="Signup sidebar"
             className="absolute inset-0 h-full w-full object-cover"
           />
