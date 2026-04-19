@@ -13,6 +13,7 @@ const transactionSchema = new Schema(
     department: { type: String, default: "General" },
     approver_id: { type: Schema.Types.ObjectId, ref: "User" },
     status: { type: String, enum: ["Approved", "Pending"], default: "Pending" },
+    is_deleted: { type: Boolean, default: false },
   },
   { 
     timestamps: { createdAt: "created_at", updatedAt: "updated_at" },
