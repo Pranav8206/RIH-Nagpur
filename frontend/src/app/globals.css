@@ -1,0 +1,48 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap");
+@import "tailwindcss";
+
+@theme {
+  /* Backgrounds */
+  --color-background: #f8faf7; /* soft natural white */
+  --color-surface: #ffffff;
+  --color-surface-hover: #f1f5f0;
+
+  /* Primary (earthy green) */
+  --color-primary-accent: #006600; /* olive green */
+  --color-primary-accent-dark: #3f6212;
+  --color-primary-accent-light: #d9f99d;
+
+  /* Secondary (soil/brown accent) */
+  --color-secondary-accent: #a16207;
+
+  /* Text */
+  --color-text-primary: #1c1c1c;
+  --color-text-secondary: #4b5563;
+  --color-text-tertiary: #6b7280;
+
+  /* Borders */
+  --color-border-light: #e5e7eb;
+
+  /* Status */
+  --color-success: #16a34a;
+  --color-warning: #ca8a04;
+  --color-error: #dc2626;
+}
+
+html {
+  font-size: 85%;
+}
+
+body {
+  font-family: "Manrope", sans-serif;
+  background: radial-gradient(
+    circle at 15% 0%,
+    #fffdf8 0%,
+    #fbf9f4 55%,
+    #f2eee6 100%
+  );
+}
+
+.font-editorial {
+  font-family: "Playfair Display", serif;
+}
