@@ -2,6 +2,7 @@ import "./globals.css";
 import Navbar from "@/Components/Navbar";
 import Footer from "@/Components/Footer";
 import { AppProvider } from "@/context/AppContext";
+import QueryProvider from "./QueryProvider";
 import { Toaster } from "react-hot-toast";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -24,12 +25,14 @@ export default function RootLayout({ children }) {
         className="min-h-screen bg-background text-text-primary flex flex-col"
         suppressHydrationWarning
       >
-        <AppProvider>
-          <Navbar />
-          <main className="grow pt-24 md:pt-32">{children}</main>
-          <Footer />
-          <Toaster />
-        </AppProvider>
+        <QueryProvider>
+          <AppProvider>
+            <Navbar />
+            <main className="grow pt-24 md:pt-32">{children}</main>
+            <Footer />
+            <Toaster />
+          </AppProvider>
+        </QueryProvider>
       </body>
     </html>
   );
