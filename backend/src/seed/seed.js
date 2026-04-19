@@ -12,161 +12,270 @@ import { connectDB } from "../config/db.js";
 
 dotenv.config();
 
-const vendors = ["AWS", "GCP", "Azure", "GitHub", "Slack", "Zoom", "Atlassian", "Figma", "Notion", "Salesforce"];
-const departments = ["Engineering", "HR", "Marketing", "Sales", "Finance"];
-const categories = ["Cloud Services", "Software Logic", "Hardware", "Travel", "Office Supplies"];
+// =======================
+// HELPER FUNCTIONS
+// =======================
+const generateRandomAmount = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
+const generateInvoiceNumber = (prefix = "INV") => `${prefix}-${Date.now().toString().slice(-6)}-${Math.floor(Math.random() * 10000)}`;
 
+const approvedVendors = ["AWS", "Microsoft", "Uber", "Dell", "Salesforce"];
+const unauthorizedVendors = ["Shady SAAS Ltd.", "Unknown Travels", "Crypto Web Services"];
+const departments = ["IT", "Travel", "Operations"];
+
+const pickRandomVendor = (unauthorized = false) => {
+  const list = unauthorized ? unauthorizedVendors : approvedVendors;
+  return list[Math.floor(Math.random() * list.length)];
+};
+
+const pickRandomDate = (monthsBackMin = 1, monthsBackMax = 6) => {
+  const date = new Date();
+  const pastMonths = Math.floor(Math.random() * (monthsBackMax - monthsBackMin + 1) + monthsBackMin);
+  date.setMonth(date.getMonth() - pastMonths);
+  date.setDate(Math.floor(Math.random() * 28) + 1); // Random day avoid 31st issues
+  return date;
+};
+
+const createDuplicateTransaction = (userId, vendor, amount, date) => {
+    return [
+       {
+            user_id: userId,
+            vendor_name: vendor,
+            amount: amount,
+            date: date,
+            invoice_number: generateInvoiceNumber("ORIGIN"),
+            payment_method: "Bank Transfer",
+            description: "Software License Renewal",
+            department: "IT",
+            status: "Approved"
+       },
+       {
+            user_id: userId,
+            vendor_name: vendor,
+            amount: amount,
+            date: date, // Explicitly the same date
+            invoice_number: generateInvoiceNumber("DUP"), // Different invoice identifier
+            payment_method: "Bank Transfer",
+            description: "Software license payment", // Slight variation in real world
+            department: "IT",
+            status: "Approved"
+       }
+    ];
+};
+
+// =======================
+// SEED EXECUTION
+// =======================
 const seedDatabase = async () => {
   await connectDB();
 
   try {
-    console.log("Clearing existing data...");
-    await User.deleteMany();
-    await Transaction.deleteMany();
-    await Anomaly.deleteMany();
-    await Classification.deleteMany();
-    await Recommendation.deleteMany();
-    await Prediction.deleteMany();
-    await DashboardMetric.deleteMany();
-    await AuditLog.deleteMany();
-
-    console.log("Seeding Users...");
-    const users = [];
-    for (let i = 0; i < 20; i++) {
-        users.push({
-            email: `user${i}_${Date.now()}@example.com`,
-            fullName: `User ${i}`,
-            password: "password123"
+    console.log("Cleaning database...");
+    await Transaction.deleteMany({});
+    await Anomaly.deleteMany({});
+    await Classification.deleteMany({});
+    await Recommendation.deleteMany({});
+    await Prediction.deleteMany({});
+    await DashboardMetric.deleteMany({});
+    await AuditLog.deleteMany({});
+    
+    // Fallback user if missing
+    let user = await User.findOne();
+    if (!user) {
+        user = await User.create({
+            email: `admin_${Date.now()}@example.com`,
+            fullName: "Admin User",
+            password: "password123" 
         });
     }
-    const createdUsers = await User.insertMany(users);
+    const userId = user._id;
 
-    console.log("Seeding Transactions...");
-    const transactions = [];
-    for (let i = 0; i < 50; i++) {
-      transactions.push({
-        user_id: createdUsers[Math.floor(Math.random() * createdUsers.length)]._id,
-        vendor_name: vendors[Math.floor(Math.random() * vendors.length)],
-        category: categories[Math.floor(Math.random() * categories.length)],
-        amount: parseFloat((Math.random() * 5000 + 10).toFixed(2)),
-        date: new Date(Date.now() - Math.floor(Math.random() * 10000000000)),
-        invoice_number: `INV-${Date.now()}-${Math.floor(Math.random() * 1000000)}-${i}`,
-        payment_method: "Credit Card",
-        description: "Monthly subscription",
-        department: departments[Math.floor(Math.random() * departments.length)],
-        status: Math.random() > 0.2 ? "Approved" : "Pending"
-      });
+    console.log("Generating Transactions...");
+    const baseTransactions = [];
+
+    // 1. Generate normal transactions (40)
+    for (let i = 0; i < 40; i++) {
+        baseTransactions.push({
+            user_id: userId,
+            vendor_name: pickRandomVendor(),
+            amount: generateRandomAmount(500, 50000),
+            date: pickRandomDate(),
+            invoice_number: generateInvoiceNumber(),
+            payment_method: ["Credit Card", "Bank Transfer"][Math.floor(Math.random() * 2)],
+            description: "Standard monthly expense",
+            department: departments[Math.floor(Math.random() * departments.length)],
+            status: "Approved"
+        });
     }
-    const createdTransactions = await Transaction.insertMany(transactions);
 
-    console.log("Seeding Anomalies...");
-    const anomalies = [];
-    for (let i = 0; i < 15; i++) {
-      anomalies.push({
-        user_id: createdUsers[Math.floor(Math.random() * createdUsers.length)]._id,
-        transaction_id: createdTransactions[Math.floor(Math.random() * createdTransactions.length)]._id,
-        anomaly_score: parseFloat(Math.random().toFixed(2)),
-        detection_type: "Statistical",
-        detection_method: "Z-Score",
-        severity: ["Low", "Medium", "High"][Math.floor(Math.random() * 3)],
-        reason_description: "Unusually high spend for this vendor",
-        detected_at: new Date(),
-        status: ["New", "Reviewed", "Resolved"][Math.floor(Math.random() * 3)]
-      });
-    }
-    const createdAnomalies = await Anomaly.insertMany(anomalies);
-
-    console.log("Seeding Classifications...");
-    const classifications = [];
-    for (let i = 0; i < 10; i++) {
-      classifications.push({
-        anomaly_id: createdAnomalies[i]._id,
-        leakage_type: ["Duplicate", "Fraud", "Idle Subscription", "Vendor Overpayment", "Budget Creep", "Unauthorized"][Math.floor(Math.random() * 6)],
-        confidence_score: parseFloat(Math.random().toFixed(2)),
-        root_cause: "System Error or Duplicate Invoice",
-        key_indicators: { error_code: "DUP_102" },
-        recommended_action: "Review and cancel duplicate subscription",
-        estimated_recovery: parseFloat((Math.random() * 1000).toFixed(2)),
-        impact_level: "High",
-        classification_date: new Date(),
-        manual_override: false
-      });
-    }
-    const createdClassifications = await Classification.insertMany(classifications);
-
-    console.log("Seeding Recommendations...");
-    const recommendations = [];
-    for (let i = 0; i < 10; i++) {
-      recommendations.push({
-        user_id: createdUsers[Math.floor(Math.random() * createdUsers.length)]._id,
-        classification_id: createdClassifications[i]._id,
-        recommendation_type: "Action",
-        action_template: "Cancellation Email",
-        estimated_recovery: createdClassifications[i].estimated_recovery,
-        priority: Math.floor(Math.random() * 5) + 1,
-        status: ["Pending", "Executed", "Rejected"][Math.floor(Math.random() * 3)],
-        action_description: createdClassifications[i].recommended_action
-      });
-    }
-    await Recommendation.insertMany(recommendations);
-
-    console.log("Seeding Predictions...");
-    const predictions = [];
+    // 2. Duplicate Transactions (10 pairs total, 5 duplicates)
     for (let i = 0; i < 5; i++) {
-      predictions.push({
-        user_id: createdUsers[Math.floor(Math.random() * createdUsers.length)]._id,
-        department: departments[i],
-        period: "Q3 2024",
-        predicted_leakage: parseFloat((Math.random() * 5000 + 1000).toFixed(2)),
-        confidence_interval: "85%",
-        baseline_spend: parseFloat((Math.random() * 50000 + 10000).toFixed(2)),
-        variance_percent: parseFloat((Math.random() * 15).toFixed(2)),
-        forecast_reason: "Historical trend of budget creep",
-        alert_threshold: 4000,
-        alert_triggered: Math.random() > 0.5
-      });
+        const vendor = pickRandomVendor();
+        const amount = generateRandomAmount(5000, 20000);
+        const date = pickRandomDate();
+        baseTransactions.push(...createDuplicateTransaction(userId, vendor, amount, date));
     }
-    await Prediction.insertMany(predictions);
 
-    console.log("Seeding Dashboard Metrics...");
-    const dashboardMetrics = [];
-    for (let i = 0; i < 10; i++) {
-      dashboardMetrics.push({
-        user_id: createdUsers[0]._id, // usually an admin looking at dashboard
-        date_snapshot: new Date(Date.now() - i * 86400000), // last 10 days
-        total_transactions: Math.floor(Math.random() * 200 + 50),
-        total_spend: parseFloat((Math.random() * 100000 + 20000).toFixed(2)),
-        anomalies_detected: Math.floor(Math.random() * 20),
-        anomalies_high_risk: Math.floor(Math.random() * 5),
-        classified_anomalies: Math.floor(Math.random() * 15),
-        recommendations_open: Math.floor(Math.random() * 10),
-        total_recovered: parseFloat((Math.random() * 5000).toFixed(2)),
-        recovery_rate: parseFloat((Math.random() * 20).toFixed(2)),
-        top_leakage_type: "Idle Subscription",
-        top_vendor: "AWS",
-        top_department: "Engineering"
-      });
+    // 3. Unusually High Transactions (5)
+    for (let i = 0; i < 5; i++) {
+        baseTransactions.push({
+            user_id: userId,
+            vendor_name: pickRandomVendor(),
+            amount: generateRandomAmount(200000, 500000), // 5-10x normal
+            date: pickRandomDate(),
+            invoice_number: generateInvoiceNumber("HIGH"),
+            payment_method: "Bank Transfer",
+            description: "Upfront Annual License Fee",
+            department: "Operations",
+            status: "Approved"
+        });
     }
-    await DashboardMetric.insertMany(dashboardMetrics);
 
-    console.log("Seeding Audit Logs...");
-    const auditLogs = [];
-    for (let i = 0; i < 20; i++) {
-      auditLogs.push({
-        user_id: createdUsers[Math.floor(Math.random() * createdUsers.length)]._id,
-        action_type: ["View", "Classify", "Recommend", "Execute"][Math.floor(Math.random() * 4)],
-        entity_type: "Anomaly",
-        entity_id: createdAnomalies[0]._id, // simplified reference
-        change_from: "Status: Pending",
-        change_to: "Status: Resolved",
-        reason: "User action",
-        ip_address: "192.168.1.1",
-        timestamp: new Date()
-      });
+    // 4. Unauthorized Transactions (3)
+    for (let i = 0; i < 3; i++) {
+        baseTransactions.push({
+            user_id: userId,
+            vendor_name: pickRandomVendor(true), // Unauthorized vendors
+            amount: generateRandomAmount(2000, 15000),
+            date: pickRandomDate(),
+            invoice_number: generateInvoiceNumber("SHDY"),
+            payment_method: "Credit Card",
+            description: "Subscription Service",
+            department: "Travel",
+            status: "Pending" // Let's leave some pending
+        });
     }
-    await AuditLog.insertMany(auditLogs);
 
-    console.log("Data seeding completed successfully!");
+    // 5. Unused Subscription (2)
+    for (let i = 0; i < 2; i++) {
+        baseTransactions.push({
+            user_id: userId,
+            vendor_name: "Dropbox",
+            amount: 1500,
+            date: pickRandomDate(),
+            invoice_number: generateInvoiceNumber("SUB"),
+            payment_method: "Credit Card",
+            description: "Monthly Service Fee - Standard",
+            department: "IT",
+            status: "Approved"
+        });
+    }
+
+    // Save All Transactions
+    const createdTransactions = await Transaction.insertMany(baseTransactions);
+
+    console.log("Generating Anomalies...");
+    // Target specific documents using their assigned identifiable logic 
+    const anomalousTransactions = await Transaction.find({
+        $or: [
+            { invoice_number: { $regex: /^DUP/ } },
+            { invoice_number: { $regex: /^HIGH/ } },
+            { vendor_name: { $in: unauthorizedVendors } },
+            { invoice_number: { $regex: /^SUB/ } }
+        ]
+    });
+    
+    // Creates approx 15 anomalies based off the injected logic above
+    const anomaliesToCreate = anomalousTransactions.slice(0, 15).map((trx) => {
+        let detType = "Statistical";
+        let sev = "Low";
+        let reason = "Detected potential issue";
+
+        if(trx.invoice_number.startsWith("DUP")) { detType = "Duplicate Detection"; sev = "High"; reason = "Exact amount and date match with another transaction for same vendor"; }
+        else if(trx.invoice_number.startsWith("HIGH")) { detType = "Budget Creep"; sev = "Medium"; reason = "500% higher than historical average for this vendor"; }
+        else if(unauthorizedVendors.includes(trx.vendor_name)) { detType = "Unauthorized"; sev = "High"; reason = "Vendor is not on approved IT procurement list"; }
+        else if(trx.invoice_number.startsWith("SUB")) { detType = "Idle Subscription"; sev = "Low"; reason = "Recurring payment with zero recorded active users in past 90 days"; }
+
+        return {
+            user_id: userId,
+            transaction_id: trx._id,
+            anomaly_score: Math.random() * (0.95 - 0.70) + 0.70, // Random scores tilted towards high Risk
+            detection_type: detType,
+            detection_method: "ML Heuristics",
+            severity: sev,
+            reason_description: reason,
+            detected_at: new Date(),
+            status: "New"
+        };
+    });
+
+    const createdAnomalies = await Anomaly.insertMany(anomaliesToCreate);
+
+    console.log("Generating Classifications...");
+    const classificationsToCreate = createdAnomalies.map(anomaly => {
+        let leakage = "Budget Creep";
+        if(anomaly.detection_type === "Duplicate Detection") leakage = "Duplicate";
+        else if(anomaly.detection_type === "Unauthorized") leakage = "Unauthorized";
+        else if(anomaly.detection_type === "Idle Subscription") leakage = "Idle Subscription";
+
+        return {
+            anomaly_id: anomaly._id,
+            leakage_type: leakage,
+            confidence_score: 0.88,
+            root_cause: "Human Error / Lack of Oversight",
+            key_indicators: { flagged_by: "System Rules", timestamp: Date.now() },
+            recommended_action: "Review and block vendor",
+            estimated_recovery: generateRandomAmount(5000, 20000),
+            impact_level: anomaly.severity
+        };
+    });
+
+    const createdClassifications = await Classification.insertMany(classificationsToCreate);
+
+    console.log("Generating Recommendations...");
+    const recommendationsToCreate = createdClassifications.map(classification => {
+        return {
+            user_id: userId,
+            classification_id: classification._id,
+            recommendation_type: "Action",
+            action_template: "Auto-Cancel Service",
+            estimated_recovery: classification.estimated_recovery,
+            priority: classification.impact_level === "High" ? 5 : 3,
+            status: "Pending",
+            action_description: classification.recommended_action
+        };
+    });
+
+    await Recommendation.insertMany(recommendationsToCreate);
+
+    console.log("Generating Dashboard Metrics...");
+    const metricsToCreate = [
+        {
+            user_id: userId,
+            date_snapshot: new Date(), // Current View
+            total_transactions: createdTransactions.length,
+            total_spend: createdTransactions.reduce((acc, curr) => acc + curr.amount, 0),
+            anomalies_detected: createdAnomalies.length,
+            anomalies_high_risk: createdAnomalies.filter(a => a.severity === "High").length,
+            classified_anomalies: createdClassifications.length,
+            recommendations_open: recommendationsToCreate.length,
+            total_recovered: 0,
+            recovery_rate: 0,
+            top_leakage_type: "Duplicate",
+            top_vendor: "AWS",
+            top_department: "IT"
+        },
+        {
+            user_id: userId,
+            date_snapshot: new Date(Date.now() - 86400000 * 7), // 7 days ago snapshot
+            total_transactions: 40,
+            total_spend: 550000,
+            anomalies_detected: 8,
+            anomalies_high_risk: 1,
+            classified_anomalies: 8,
+            recommendations_open: 5,
+            total_recovered: 15000,
+            recovery_rate: 15, // Percent
+            top_leakage_type: "Idle Subscription",
+            top_vendor: "Microsoft",
+            top_department: "Travel"
+        }
+    ];
+
+    await DashboardMetric.insertMany(metricsToCreate);
+
+    console.log("=========================================");
+    console.log("SEEDED REAL-WORLD FINANCIAL DATA (60 TRX)");
+    console.log("=========================================");
     process.exit(0);
   } catch (error) {
     console.error("Error during data seeding:", error);
