@@ -1,4 +1,4 @@
-# Expense Leakage Detection System 🔍💰
+# SpendShield - Expense Leakage Detection System 🔍💰
 
 An enterprise-grade, full-stack application designed to automatically detect, classify, and recover anomalous billing patterns and expense leakage using a Node.js backend executing Mongoose aggregations, and a modular Next.js frontend mapping data securely natively.
 
