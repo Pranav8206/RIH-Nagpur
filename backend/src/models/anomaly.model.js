@@ -48,3 +48,4 @@ anomalySchema.pre("save", function(next) {
 });
 
 export const Anomaly = model("Anomaly", anomalySchema);
+export default Anomaly;

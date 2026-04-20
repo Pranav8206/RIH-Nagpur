@@ -54,3 +54,4 @@ classificationSchema.pre("save", function(next) {
 });
 
 export const Classification = model("Classification", classificationSchema);
+export default Classification;

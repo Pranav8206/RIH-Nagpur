@@ -44,3 +44,4 @@ transactionSchema.pre("save", function(next) {
 });
 
 export const Transaction = model("Transaction", transactionSchema);
+export default Transaction;
