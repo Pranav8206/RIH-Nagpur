@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { Loader2, CheckCircle, AlertTriangle, AlertCircle, RefreshCw } from "lucide-react";
+import { useAppContext } from "@/context/AppContext";
 
 export default function PasteParseComponent({ onSuccess }) {
+  const { axiosInstance } = useAppContext();
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -39,7 +40,7 @@ export default function PasteParseComponent({ onSuccess }) {
     setMissingFields([]);
     
     try {
-      const { data } = await axios.post(
+      const { data } = await axiosInstance.post(
         "/import/parse-text",
         { raw_text: inputText }
       );
@@ -107,7 +108,7 @@ export default function PasteParseComponent({ onSuccess }) {
         amount: parseFloat(parsedData.amount),
       };
 
-      await axios.post("/transactions", payload);
+      await axiosInstance.post("/transactions", payload);
 
       setCreatedData(payload);
       setStep("created");

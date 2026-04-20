@@ -2,8 +2,8 @@
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { ChevronLeft, ShieldAlert } from 'lucide-react';
+import { useAppContext } from '@/context/AppContext';
 
 import AnomalyDetailCard from '@/components/anomalies/AnomalyDetailCard';
 import ClassificationPanel from '@/components/anomalies/ClassificationPanel';
@@ -14,12 +14,13 @@ import RelatedTransactions from '@/components/anomalies/RelatedTransactions';
 export default function AnomalyDetailView() {
     const { id } = useParams();
     const router = useRouter();
+    const { axiosInstance } = useAppContext();
 
     // The entire context runs strictly mapping React Query states utilizing fast caching logic
     const { data, isLoading, isError } = useQuery({
        queryKey: ['anomaly', id],
        queryFn: async () => {
-           const res = await axios.get(`/anomalies/${id}`);
+           const res = await axiosInstance.get(`/anomalies/${id}`);
            return res.data;
        }
     });

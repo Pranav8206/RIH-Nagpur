@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { ChevronLeft, ShieldAlert, Zap, Network } from 'lucide-react';
+import { useAppContext } from '@/context/AppContext';
 
 import ClassificationDetailCard from '@/components/classifications/ClassificationDetailCard';
 import KeyIndicators from '@/components/classifications/KeyIndicators';
@@ -13,12 +13,13 @@ export default function ClassificationDetailView() {
     const { id } = useParams();
     const router = useRouter();
     const [actionSync, setActionSync] = useState(false);
+    const { axiosInstance } = useAppContext();
 
     // Bypassing blocking sequential requests completely caching natively mapping queries!
     const { data, isLoading, isError } = useQuery({
        queryKey: ['classification', id],
        queryFn: async () => {
-           const res = await axios.get(`/classifications/${id}`);
+           const res = await axiosInstance.get(`/classifications/${id}`);
            return res.data;
        }
     });

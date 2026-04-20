@@ -2,34 +2,33 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import AnomalyTable from '@/components/anomalies/AnomalyTable';
 import AnomalyFilters from '@/components/anomalies/AnomalyFilters';
 import BulkActions from '@/components/anomalies/BulkActions';
 import { ShieldAlert, RefreshCw } from 'lucide-react';
-
-const fetchAnomalies = async ({ queryKey }) => {
-   const [_key, filters, page] = queryKey;
-   const params = new URLSearchParams();
-   
-   if (page) params.append('page', page);
-   params.append('limit', '20');
-   if (filters.status) params.append('status', filters.status);
-   if (filters.severity) params.append('severity', filters.severity);
-   
-   const { data } = await axios.get(`/anomalies?${params.toString()}`);
-   return data;
-};
+import { useAppContext } from '@/context/AppContext';
 
 export default function AnomaliesListPage() {
   const queryClient = useQueryClient();
+    const { axiosInstance } = useAppContext();
   const [filters, setFilters] = useState({ status: '', severity: '', vendor: '' });
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
 
   const { data, isLoading, isError, error, isFetching } = useQuery({
     queryKey: ['anomalies', filters, page],
-    queryFn: fetchAnomalies,
+        queryFn: async ({ queryKey }) => {
+            const [_key, currentFilters, currentPage] = queryKey;
+            const params = new URLSearchParams();
+
+            if (currentPage) params.append('page', currentPage);
+            params.append('limit', '20');
+            if (currentFilters.status) params.append('status', currentFilters.status);
+            if (currentFilters.severity) params.append('severity', currentFilters.severity);
+
+            const { data } = await axiosInstance.get(`/anomalies?${params.toString()}`);
+            return data;
+        },
     keepPreviousData: true, 
   });
 
@@ -43,7 +42,7 @@ export default function AnomaliesListPage() {
       if(selectedIds.length === 0) return;
       try {
           const promises = selectedIds.map(id => 
-              axios.patch(`/anomalies/${id}`, { status: actionStatus })
+              axiosInstance.patch(`/anomalies/${id}`, { status: actionStatus })
           );
           await Promise.all(promises);
           queryClient.invalidateQueries(['anomalies']);
@@ -55,7 +54,7 @@ export default function AnomaliesListPage() {
 
   return (
       <div className="min-h-[calc(100vh-64px)] bg-transparent pb-12 selection:bg-primary-accent-light/50 font-sans">
-         <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+         <main className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8 pt-8">
             <div className="flex justify-between items-center mb-8">
                 <div>
                    <h1 className="text-2xl font-bold tracking-tight text-text-primary flex items-center">
@@ -80,7 +79,7 @@ export default function AnomaliesListPage() {
                 </div>
             )}
 
-            <div className="bg-surface rounded-xl border border-border-light shadow-sm overflow-hidden flex flex-col min-h-[600px] bg-opacity-70 backdrop-filter backdrop-blur-sm">
+            <div className="bg-surface rounded-xl border border-border-light shadow-sm overflow-hidden flex flex-col min-h-150 bg-opacity-70 backdrop-filter backdrop-blur-sm">
                 
                 <AnomalyFilters currentFilters={filters} onFilterChange={handleFilterChange} />
                 

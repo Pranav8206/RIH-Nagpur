@@ -1,17 +1,18 @@
 "use client";
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { Network, ArrowRight } from 'lucide-react';
+import { useAppContext } from '@/context/AppContext';
 
 export default function ClassificationPanel({ classification, anomalyId }) {
     const queryClient = useQueryClient();
     const [loading, setLoading] = useState(false);
+    const { axiosInstance } = useAppContext();
 
     const handleClassify = async () => {
         setLoading(true);
         try {
-            await axios.post(`/classifications/classify`); 
+            await axiosInstance.post(`/classifications/classify`); 
             await queryClient.invalidateQueries(['anomaly', anomalyId]);
         } catch(e) {
             alert('Classification Trigger Failed');
@@ -58,7 +59,7 @@ export default function ClassificationPanel({ classification, anomalyId }) {
                    <div className="flex-1 flex flex-col items-center justify-center text-center">
                        <Network className="w-8 h-8 text-indigo-200 mb-3" />
                        <h4 className="text-sm font-semibold text-text-secondary">Awaiting Taxonomy Pattern</h4>
-                       <p className="text-xs text-text-tertiary mt-1 max-w-[200px] mb-5 leading-relaxed tracking-wide">This node has not been routed through the ML verification pipeline natively yet.</p>
+                       <p className="text-xs text-text-tertiary mt-1 max-w-50 mb-5 leading-relaxed tracking-wide">This node has not been routed through the ML verification pipeline natively yet.</p>
                        <button 
                          onClick={handleClassify}
                          disabled={loading}

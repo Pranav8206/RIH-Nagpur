@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect } from "react";
 import Papa from "papaparse";
-import axios from "axios";
 import { UploadCloud, CheckCircle, XCircle, AlertCircle, FileText, Loader2 } from "lucide-react";
+import { useAppContext } from "@/context/AppContext";
 
 export default function CSVUploadComponent({ onSuccess }) {
+  const { axiosInstance } = useAppContext();
   const [file, setFile] = useState(null);
   const [parsedHeaders, setParsedHeaders] = useState([]);
   const [parsedRows, setParsedRows] = useState([]);
@@ -114,7 +115,7 @@ export default function CSVUploadComponent({ onSuccess }) {
     formData.append("transactions_file", file);
 
     try {
-      const response = await axios.post("/import/csv", formData, {
+      const response = await axiosInstance.post("/import/csv", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

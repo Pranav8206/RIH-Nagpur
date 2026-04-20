@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { RefreshCcw, AlertTriangle } from "lucide-react";
+import { useAppContext } from "@/context/AppContext";
 
 import KPICard from "@/components/dashboard/KPICard";
 import AnomalyTable from "@/components/dashboard/AnomalyTable";
@@ -11,6 +11,7 @@ import TimelineChart from "@/components/dashboard/TimelineChart";
 import SidebarActions from "@/components/dashboard/SidebarActions";
 
 export default function DashboardPage() {
+  const { axiosInstance } = useAppContext();
   const [metrics, setMetrics] = useState(null);
   const [timeline, setTimeline] = useState([]);
   const [topAnomalies, setTopAnomalies] = useState([]);
@@ -20,11 +21,6 @@ export default function DashboardPage() {
   const [error, setError] = useState(null);
   const [processing, setProcessing] = useState(false);
 
-  // Configure JWT abstraction natively mimicking enterprise states
-  const axiosConfig = {
-    // headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } // Enable upon Auth tie-in
-  };
-
   // Standard payload fetcher aggregating endpoints concurrently
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -32,23 +28,17 @@ export default function DashboardPage() {
     try {
       // Resolve mappings bypassing waterfall blocking delays
       const [metricsRes, timelineRes, topRes, deptRes] = await Promise.all([
-        axios
-          .get("/dashboard/metrics", axiosConfig)
+        axiosInstance
+          .get("/dashboard/metrics")
           .catch(() => ({ data: { data: {} } })),
-        axios
-          .get(
-            "/dashboard/timeline?period=month",
-            axiosConfig,
-          )
+        axiosInstance
+          .get("/dashboard/timeline?period=month")
           .catch(() => ({ data: { data: { dates: [] } } })),
-        axios
-          .get(
-            "/dashboard/top-anomalies?limit=5",
-            axiosConfig,
-          )
+        axiosInstance
+          .get("/dashboard/top-anomalies?limit=5")
           .catch(() => ({ data: { data: [] } })),
-        axios
-          .get("/dashboard/by-department", axiosConfig)
+        axiosInstance
+          .get("/dashboard/by-department")
           .catch(() => ({ data: { data: [] } })),
       ]);
 
@@ -86,11 +76,7 @@ export default function DashboardPage() {
   const handleRunDetection = async () => {
     setProcessing(true);
     try {
-      await axios.post(
-        "/anomalies/detect",
-        {},
-        axiosConfig,
-      );
+      await axiosInstance.post("/anomalies/detect", {});
       await fetchDashboardData();
     } catch (err) {
       alert("Detection ML engine failed to synchronize.");
@@ -102,11 +88,7 @@ export default function DashboardPage() {
   const handleRunClassification = async () => {
     setProcessing(true);
     try {
-      await axios.post(
-        "/classifications/classify",
-        {},
-        axiosConfig,
-      );
+      await axiosInstance.post("/classifications/classify", {});
       await fetchDashboardData();
     } catch (err) {
       alert("Classification taxonomy matrix failed.");
@@ -117,7 +99,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-transparent text-text-primary pb-12 font-sans selection:bg-primary-accent-light/50">
-      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 pt-6 max-w-[1600px] mx-auto mb-2">
+      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 pt-6 max-w-400 mx-auto mb-2">
         <h2 className="text-2xl font-bold text-text-primary">
           Dashboard Overview
         </h2>
@@ -142,7 +124,7 @@ export default function DashboardPage() {
         {/* Global Error Handle */}
         {error && (
           <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-xl flex items-start text-error shadow-sm animate-in fade-in slide-in-from-top-4">
-            <AlertTriangle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 mr-3 shrink-0 mt-0.5" />
             <div>
               <h4 className="font-semibold text-sm">
                 System Synchronization Error
@@ -192,7 +174,7 @@ export default function DashboardPage() {
         {/* Center Heavy Elements */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
           {/* Main Action Table */}
-          <div className="lg:col-span-9 h-[500px]">
+          <div className="lg:col-span-9 h-125">
             <AnomalyTable data={topAnomalies} isLoading={loading} />
           </div>
           {/* Workflow Actions Segment */}

@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
 import { CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { useAppContext } from "@/context/AppContext";
 
 export default function ManualEntryForm({ onSuccess }) {
+  const { axiosInstance } = useAppContext();
   const initialFormState = {
     vendor_name: "",
     amount: "",
@@ -88,7 +89,7 @@ export default function ManualEntryForm({ onSuccess }) {
         // Send optional fields as null/undefined if empty, though strings are usually fine
       };
 
-      await axios.post("/transactions", payload);
+      await axiosInstance.post("/transactions", payload);
 
       setSuccessMessage("Transaction added successfully");
       if (onSuccess) onSuccess(1);
@@ -126,7 +127,7 @@ export default function ManualEntryForm({ onSuccess }) {
           {/* Global API Error */}
           {apiError && (
             <div className="flex items-center space-x-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              <AlertCircle className="h-5 w-5 flex-shrink-0" />
+              <AlertCircle className="h-5 w-5 shrink-0" />
               <span>{apiError}</span>
             </div>
           )}
