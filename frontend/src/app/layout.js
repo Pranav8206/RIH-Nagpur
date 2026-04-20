@@ -28,7 +28,7 @@ export default function RootLayout({ children }) {
         <QueryProvider>
           <AppProvider>
             <Navbar />
-            <main className="grow pt-24 md:pt-32">{children}</main>
+            <main className="grow">{children}</main>
             <Footer />
             <Toaster />
           </AppProvider>

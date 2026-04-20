@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -28,7 +29,10 @@ const Navbar = () => {
   const { isAuthenticated, user, authReady, logout, deleteAccount } =
     useAppContext();
 
-  if (pathname?.match(/^\/(dashboard|anomalies|classifications|recommendations)/)) return null;
+  // Move the pathname check AFTER all hooks (not before return)
+  const shouldHideNavbar = pathname?.match(
+    /^\/(dashboard|anomalies|classifications|recommendations|import)/,
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -54,7 +58,7 @@ const Navbar = () => {
   const avatarContent = useMemo(() => {
     if (user?.profilePic) {
       return (
-        <img
+        <Image
           src={user.profilePic}
           alt={user?.fullName || "Profile"}
           className="h-10 w-10 rounded-full object-cover"
@@ -115,6 +119,9 @@ const Navbar = () => {
       setMenuActionLoading(false);
     }
   };
+
+  // Return early AFTER all hooks, not before
+  if (shouldHideNavbar) return null;
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-background border-b border-border-light shadow-sm">
@@ -205,6 +212,14 @@ const Navbar = () => {
                 >
                   <LogOut size={16} />
                   <span>Logout</span>
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={menuActionLoading}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium text-red-500 hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Trash2 size={16} />
+                  <span>Delete Account</span>
                 </button>
               </div>
             )}
