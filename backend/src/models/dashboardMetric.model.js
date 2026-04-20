@@ -32,3 +32,4 @@ dashboardMetricSchema.pre("save", function(next) {
 });
 
 export const DashboardMetric = model("DashboardMetric", dashboardMetricSchema);
+export default DashboardMetric;
