@@ -5,7 +5,7 @@ import Papa from "papaparse";
 import axios from "axios";
 import { UploadCloud, CheckCircle, XCircle, AlertCircle, FileText, Loader2 } from "lucide-react";
 
-export default function CSVUploadComponent() {
+export default function CSVUploadComponent({ onSuccess }) {
   const [file, setFile] = useState(null);
   const [parsedHeaders, setParsedHeaders] = useState([]);
   const [parsedRows, setParsedRows] = useState([]);
@@ -128,6 +128,10 @@ export default function CSVUploadComponent() {
         summary: response.data.summary,
         errors: response.data.errors || [],
       });
+      
+      if (response.data.success && onSuccess) {
+        onSuccess(response.data.summary?.created || 0);
+      }
     } catch (err) {
       setUploadResult({
         success: false,

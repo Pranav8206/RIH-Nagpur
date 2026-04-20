@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
 
-export default function ManualEntryForm() {
+export default function ManualEntryForm({ onSuccess }) {
   const initialFormState = {
     vendor_name: "",
     amount: "",
@@ -97,6 +97,7 @@ export default function ManualEntryForm() {
       });
 
       setSuccessMessage("Transaction added successfully");
+      if (onSuccess) onSuccess(1);
     } catch (err) {
       setApiError(err.response?.data?.message || err.message || "Failed to add transaction");
     } finally {
