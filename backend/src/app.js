@@ -22,7 +22,10 @@ app.get("/", (req, res) => {
 
 // routes import
 import userRouter from "./routes/user.route.js";
+import importRouter from "./routes/importRoutes.js";
+
 app.use("/api/v1/users", userRouter);
+app.use("/api/import", importRouter);
 
 app.use((req, res, next) => {
   console.log("app.js 1");

@@ -7,7 +7,7 @@ const transactionSchema = new Schema(
     category: { type: String, default: "Uncategorized" },
     amount: { type: Number, min: 0, required: true },
     date: { type: Date, default: Date.now },
-    invoice_number: { type: String, unique: true, required: true },
+    invoice_number: { type: String },
     payment_method: { type: String, default: "Unknown" },
     description: { type: String, default: "" },
     department: { type: String, default: "General" },
@@ -24,8 +24,7 @@ const transactionSchema = new Schema(
 
 transactionSchema.index({ user_id: 1, date: -1 });
 transactionSchema.index({ user_id: 1, status: 1 });
-transactionSchema.index({ invoice_number: 1 }, { unique: true });
-
+transactionSchema.index({ user_id: 1, invoice_number: 1 }, { unique: true, sparse: true });
 // Instance Methods
 transactionSchema.methods.calculateSpendCategory = function() {
   if (["AWS", "GCP", "AZURE"].includes(this.vendor_name?.toUpperCase())) {

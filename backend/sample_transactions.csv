@@ -1,0 +1,51 @@
+vendor_name,amount,date,category,department,invoice_number,payment_method,description
+Amazon AWS,150.50,2026-04-15,Cloud Services,Engineering,INV-2026-101,Card,Monthly hosting fee
+Google Cloud,$200.00,04/16/2026,,,INV-2026-102,Card,DB Hosting
+Microsoft Azure,300.00,2026-04-17,Cloud Services,Engineering,INV-2026-103,ACH,Azure VM
+Office Depot,45.20,2026-04-10,Office Supplies,Admin,INV-2026-104,Other,Pens and paper
+Adobe Inc.,₹55.00,2026-04-12,Software,Design,INV-2026-105,Card,Creative Cloud subscription
+Slack Technologies,120.00,2026-04-01,Software,Company,INV-2026-106,,Team communication
+Zoom Video,14.99,2026-04-02,Software,Company,INV-2026-107,Card,Pro plan
+GitHub,40.00,2026-04-03,Software,Engineering,INV-2026-108,Card,Team plan
+Atlassian,50.00,2026-04-04,Software,Engineering,INV-2026-109,Card,Jira software
+DigitalOcean,20.00,2026-04-05,Cloud Services,Engineering,INV-2026-110,Card,Droplet
+Mongo DB,100.00,2026-04-06,Database,Engineering,INV-2026-111,Card,Atlas cluster
+SendGrid,35.00,2026-04-07,Marketing,Marketing,INV-2026-112,Card,Email marketing
+MailChimp,45.00,2026-04-08,Marketing,Marketing,INV-2026-113,Card,Newsletter
+HubSpot,800.00,2026-04-09,Sales,Sales,INV-2026-114,ACH,CRM
+Salesforce,1200.00,2026-04-10,Sales,Sales,INV-2026-115,ACH,Enterprise CRM
+Zendesk,150.00,2026-04-11,Support,Support,INV-2026-116,Card,Support tickets
+Intercom,90.00,2026-04-12,Support,Support,INV-2026-117,Card,Customer messaging
+Stripe,30.00,2026-04-13,Finance,Finance,INV-2026-118,Card,Payment processing
+PayPal,15.00,2026-04-14,Finance,Finance,INV-2026-119,Card,Transaction fee
+QuickBooks,60.00,2026-04-15,Finance,Finance,INV-2026-120,Card,Accounting
+Gusto,40.00,2026-04-16,HR,HR,INV-2026-121,Card,Payroll
+Rippling,80.00,2026-04-17,HR,HR,INV-2026-122,Card,HR management
+WeWork,500.00,2026-04-18,Facilities,Admin,INV-2026-123,ACH,Coworking space
+FedEx,25.00,2026-04-19,Shipping,Admin,INV-2026-124,Card,Package delivery
+UPS,30.00,2026-04-20,Shipping,Admin,INV-2026-125,Card,Freight
+USPS,10.00,2026-04-21,Shipping,Admin,INV-2026-126,Card,Stamps
+Starbucks,8.50,2026-04-22,Meals,Sales,INV-2026-127,Card,Client coffee
+Panera Bread,45.00,2026-04-23,Meals,Sales,INV-2026-128,Card,Team lunch
+Uber,35.00,2026-04-24,Travel,Sales,INV-2026-129,Card,Ride to meeting
+Lyft,28.00,2026-04-25,Travel,Sales,INV-2026-130,Card,Ride from airport
+Delta Airlines,450.00,2026-04-26,Travel,Sales,INV-2026-131,Card,Flight to NYC
+Marriott,300.00,2026-04-27,Travel,Sales,INV-2026-132,Card,Hotel stay
+Hilton,280.00,2026-04-28,Travel,Sales,INV-2026-133,Card,Hotel stay
+Airbnb,200.00,2026-04-29,Travel,Sales,INV-2026-134,Card,Apartment rental
+Hertz,120.00,2026-04-30,Travel,Sales,INV-2026-135,Card,Car rental
+Avis,110.00,2026-05-01,Travel,Sales,INV-2026-136,Card,Car rental
+Apple,2000.00,2026-05-02,Equipment,IT,INV-2026-137,Check,New Macbook Pro
+Dell,1500.00,2026-05-03,Equipment,IT,INV-2026-138,Check,Desktop PC
+Lenovo,1200.00,2026-05-04,Equipment,IT,INV-2026-139,Check,Thinkpad
+Logitech,85.00,2026-05-05,Equipment,IT,INV-2026-140,Card,Mouse and Keyboard
+Best Buy,300.00,2026-05-06,Equipment,IT,INV-2026-141,Card,Monitors
+B&H Photo,500.00,2026-05-07,Equipment,IT,INV-2026-142,Card,Camera gear
+Target,150.00,2026-05-08,Supplies,Admin,INV-2026-143,Card,Office snacks
+Walmart,200.00,2026-05-09,Supplies,Admin,INV-2026-144,Card,Office equipment
+Costco,400.00,2026-05-10,Supplies,Admin,INV-2026-145,Card,Bulk supplies
+Home Depot,180.00,2026-05-11,Facilities,Admin,INV-2026-146,Card,Repairs
+IKEA,250.00,2026-05-12,Facilities,Admin,INV-2026-147,Card,Desks
+Vercel,20.00,2026-05-13,Cloud Services,Engineering,INV-2026-148,Card,Frontend hosting
+Invalid Vendor,0,bad-date,Invalid,Test,,,,Should fail due to amount and date
+Another Invalid,,2026-01-01,,,,,,Should fail due to missing amount

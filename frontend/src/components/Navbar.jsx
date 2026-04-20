@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
 import toast from "react-hot-toast";
+import Image from "next/image";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,8 +27,10 @@ const Navbar = () => {
   const pathname = usePathname();
   const { isAuthenticated, user, authReady, logout, deleteAccount } =
     useAppContext();
+
+  // Move the pathname check AFTER all hooks (not before return)
   const shouldHideNavbar = pathname?.match(
-    /^\/(dashboard|anomalies|classifications|recommendations)/,
+    /^\/(dashboard|anomalies|classifications|recommendations|import)/,
   );
 
   useEffect(() => {
@@ -54,7 +57,7 @@ const Navbar = () => {
   const avatarContent = useMemo(() => {
     if (user?.profilePic) {
       return (
-        <img
+        <Image
           src={user.profilePic}
           alt={user?.fullName || "Profile"}
           className="h-10 w-10 rounded-full object-cover"
@@ -116,6 +119,9 @@ const Navbar = () => {
     }
   };
 
+  // Return early AFTER all hooks, not before
+  if (shouldHideNavbar) return null;
+
   return (
     <nav
       className={`sticky top-0 z-50 w-full bg-background border-b border-border-light shadow-sm ${
@@ -125,9 +131,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 py-3">
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2 cursor-pointer">
-            <ShieldAlert className="text-primary-accent" size={28} />
+            <Image src="/logo.png" alt="Logo" width={40} height={40} />
             <span className="text-2xl font-bold text-text-primary tracking-tight">
-              Expense<span className="text-primary-accent">Guard</span>
+              Spend<span className="text-primary-accent">Shield</span>
             </span>
           </Link>
 
@@ -209,6 +215,14 @@ const Navbar = () => {
                 >
                   <LogOut size={16} />
                   <span>Logout</span>
+                </button>
+                <button
+                  onClick={handleDeleteAccount}
+                  disabled={menuActionLoading}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium text-red-500 hover:bg-surface-hover disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Trash2 size={16} />
+                  <span>Delete Account</span>
                 </button>
               </div>
             )}

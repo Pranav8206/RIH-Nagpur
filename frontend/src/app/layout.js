@@ -9,12 +9,16 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
-  title: "Project Title",
+  title: "SpendShield - AI-Powered Expense Management",
   description:
-    "Project description",
+    "SpendShield is an AI-powered expense management platform that helps you track, analyze, and optimize your spending.",
   keywords: [
-    "project keyword 1",
-    "project keyword 2",
+    "SpendShield",
+    "Expense Management",
+    "AI-Powered",
+    "Expense Tracking",
+    "Expense Analysis",
+    "Expense Optimization",
   ],
 };
 
