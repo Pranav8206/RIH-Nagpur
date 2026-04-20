@@ -23,7 +23,7 @@ const predictionSchema = new Schema(
 predictionSchema.index({ user_id: 1 });
 
 // Middleware
-predictionSchema.pre("save", function(next) {
+predictionSchema.pre("save", async function() {
   this.updated_at = new Date();
   if (this.department) {
     this.department = this.department.trim();
@@ -31,7 +31,6 @@ predictionSchema.pre("save", function(next) {
   if (this.predicted_leakage >= this.alert_threshold) {
     this.alert_triggered = true;
   }
-  next();
 });
 
 export const Prediction = model("Prediction", predictionSchema);

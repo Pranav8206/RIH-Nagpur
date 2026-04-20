@@ -34,12 +34,11 @@ transactionSchema.methods.calculateSpendCategory = function() {
 };
 
 // Middleware
-transactionSchema.pre("save", function(next) {
+transactionSchema.pre("save", async function() {
   this.updated_at = new Date();
   if (this.vendor_name) {
     this.vendor_name = this.vendor_name.toLowerCase();
   }
-  next();
 });
 
 export const Transaction = model("Transaction", transactionSchema);

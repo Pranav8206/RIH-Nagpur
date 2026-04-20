@@ -39,12 +39,12 @@ anomalySchema.methods.checkIfHighRisk = function() {
 };
 
 // Middleware
-anomalySchema.pre("save", function(next) {
+anomalySchema.pre("save", async function() {
   this.updated_at = new Date();
   if (this.detection_type) {
     this.detection_type = this.detection_type.trim().toLowerCase();
   }
-  next();
+
 });
 
 export const Anomaly = model("Anomaly", anomalySchema);

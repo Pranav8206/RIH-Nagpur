@@ -17,15 +17,25 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" })); // Parse URL-enc
 app.use(cookieParser());
 
 app.get("/", (req, res) => {
-  res.send("Welcome");
+  res.send("Welcome back");
 });
 
 // routes import
 import userRouter from "./routes/user.route.js";
 import importRouter from "./routes/importRoutes.js";
+import anomalyRouter from "./routes/anomalyRoutes.js";
+import classificationRouter from "./routes/classificationRoutes.js";
+import recommendationRouter from "./routes/recommendationRoutes.js";
+import dashboardRouter from "./routes/dashboardRoutes.js";
+import transactionRouter from "./routes/transactionRoutes.js";
 
 app.use("/api/v1/users", userRouter);
-app.use("/api/import", importRouter);
+app.use("/api/v1/import", importRouter);
+app.use("/api/v1/anomalies", anomalyRouter);
+app.use("/api/v1/classifications", classificationRouter);
+app.use("/api/v1/recommendations", recommendationRouter);
+app.use("/api/v1/dashboard", dashboardRouter);
+app.use("/api/v1/transactions", transactionRouter);
 
 app.use((req, res, next) => {
   console.log("app.js 1");

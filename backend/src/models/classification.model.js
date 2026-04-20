@@ -45,12 +45,11 @@ classificationSchema.methods.getRecoveryPotential = function() {
 };
 
 // Middleware
-classificationSchema.pre("save", function(next) {
+classificationSchema.pre("save", async function() {
   this.updated_at = new Date();
   if (this.root_cause) {
     this.root_cause = this.root_cause.trim();
   }
-  next();
 });
 
 export const Classification = model("Classification", classificationSchema);
