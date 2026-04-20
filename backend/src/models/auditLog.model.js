@@ -3,7 +3,7 @@ import mongoose, { Schema, model } from "mongoose";
 const auditLogSchema = new Schema(
   {
     user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    action_type: { type: String, enum: ["View", "Classify", "Recommend", "Execute"], required: true },
+    action_type: { type: String, enum: ["View", "Classify", "Recommend", "Execute", "Import"], required: true },
     entity_type: { type: String, required: true },
     entity_id: { type: Schema.Types.ObjectId, required: true },
     change_from: { type: String, default: "" },
