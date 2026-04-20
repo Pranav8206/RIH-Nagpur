@@ -65,7 +65,7 @@ To ensure swift querying across our models, index strategies were implemented sp
 
 ### Scaling Strategy
 - **Indexing:** Ensures efficient reads and avoids full collection scans for targeted queries.
-- **Caching:** In future iterations, implementing an external cache (e.g. Redis) is recommended for read-heavy operations like pulling `DashboardMetric` snapshots.
+- **Caching:** Dashboard metrics use a lightweight in-process TTL cache, so the backend runs without any external cache service.
 - **Sharding:** If `Transactions` scaling hits vertical limits, horizontal sharding using `user_id` or `department` as the shard key ensures optimal data distribution.
 
 ## Example Aggregation Queries

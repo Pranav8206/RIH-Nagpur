@@ -10,7 +10,8 @@ export const importCSV = async (req, res, next) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file uploaded" });
     }
-
+    console.log("import csv called");
+    
     const filePath = req.file.path;
     let parsedRows;
 

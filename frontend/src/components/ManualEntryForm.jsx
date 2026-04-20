@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import axios from "axios";
 import { CheckCircle, AlertCircle, RefreshCw } from "lucide-react";
+import { useAppContext } from "@/context/AppContext";
 
 export default function ManualEntryForm({ onSuccess }) {
+  const { axiosInstance } = useAppContext();
   const initialFormState = {
     vendor_name: "",
     amount: "",
@@ -45,6 +46,10 @@ export default function ManualEntryForm({ onSuccess }) {
       }
     }
 
+    if (name === "invoice_number") {
+      if (!value.trim()) error = "Invoice Number is required";
+    }
+
     setErrors((prev) => ({ ...prev, [name]: error }));
     return error;
   };
@@ -62,9 +67,10 @@ export default function ManualEntryForm({ onSuccess }) {
     const isVendorValid = formData.vendor_name.trim().length > 0 && formData.vendor_name.length <= 255;
     const isAmountValid = formData.amount !== "" && parseFloat(formData.amount) > 0;
     const isDateValid = formData.date !== "" && new Date(formData.date) <= new Date();
+    const isInvoiceValid = formData.invoice_number.trim().length > 0;
 
-    const hasNoErrors = !errors.vendor_name && !errors.amount && !errors.date;
-    return isVendorValid && isAmountValid && isDateValid && hasNoErrors;
+    const hasNoErrors = !errors.vendor_name && !errors.amount && !errors.date && !errors.invoice_number;
+    return isVendorValid && isAmountValid && isDateValid && isInvoiceValid && hasNoErrors;
   };
 
   const handleSubmit = async (e) => {
@@ -74,27 +80,28 @@ export default function ManualEntryForm({ onSuccess }) {
     const vendorErr = validateField("vendor_name", formData.vendor_name);
     const amountErr = validateField("amount", formData.amount);
     const dateErr = validateField("date", formData.date);
+    const invoiceErr = validateField("invoice_number", formData.invoice_number);
 
-    if (vendorErr || amountErr || dateErr) return;
+    if (vendorErr || amountErr || dateErr || invoiceErr) return;
 
     setLoading(true);
     setApiError("");
     setSuccessMessage("");
 
     try {
-      const token = localStorage.getItem("token") || "";
       const payload = {
-        ...formData,
+        vendor_name: formData.vendor_name.trim(),
+        invoice_number: formData.invoice_number.trim(),
         amount: parseFloat(formData.amount),
-        // Send optional fields as null/undefined if empty, though strings are usually fine
+        category: formData.category,
+        date: formData.date,
       };
 
-      await axios.post("/api/transactions", payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      if (formData.department.trim()) payload.department = formData.department.trim();
+      if (formData.payment_method.trim()) payload.payment_method = formData.payment_method.trim();
+      if (formData.description.trim()) payload.description = formData.description.trim();
+
+      await axiosInstance.post("/transactions", payload);
 
       setSuccessMessage("Transaction added successfully");
       if (onSuccess) onSuccess(1);
@@ -132,7 +139,7 @@ export default function ManualEntryForm({ onSuccess }) {
           {/* Global API Error */}
           {apiError && (
             <div className="flex items-center space-x-2 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-              <AlertCircle className="h-5 w-5 flex-shrink-0" />
+              <AlertCircle className="h-5 w-5 shrink-0" />
               <span>{apiError}</span>
             </div>
           )}
@@ -260,16 +267,20 @@ export default function ManualEntryForm({ onSuccess }) {
 
             {/* Invoice Number */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Invoice Number <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 name="invoice_number"
                 value={formData.invoice_number}
                 onChange={handleChange}
                 placeholder="e.g. INV-2026-X"
-                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-shadow"
-              >
-              </input>
+                className={`w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition-shadow ${
+                  errors.invoice_number ? "border-red-500" : "border-gray-300"
+                }`}
+              />
+              {errors.invoice_number && <p className="mt-1 text-xs text-red-600">{errors.invoice_number}</p>}
             </div>
           </div>
 

@@ -1,17 +1,18 @@
 "use client";
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import { Search, ExternalLink, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useAppContext } from '@/context/AppContext';
 
 export default function RelatedTransactions({ vendor, currentTrxId }) {
+    const { axiosInstance } = useAppContext();
     const { data, isLoading, isError } = useQuery({
        queryKey: ['related_transactions', vendor],
        queryFn: async () => {
            if(!vendor) return [];
            // Fetch bounded transaction arrays explicitly resolving similar outputs 
-           const res = await axios.get(`http://localhost:5000/api/transactions?vendor_name=${encodeURIComponent(vendor)}&limit=5`);
+           const res = await axiosInstance.get(`/transactions?vendor_name=${encodeURIComponent(vendor)}&limit=5`);
            return res.data;
        },
        enabled: !!vendor
@@ -25,7 +26,7 @@ export default function RelatedTransactions({ vendor, currentTrxId }) {
               <h3 className="text-sm font-bold text-text-primary tracking-tight flex items-center">
                  <Search className="w-4 h-4 mr-2 text-primary-accent" /> Vendor History
               </h3>
-              <span className="text-xs font-semibold text-text-tertiary px-2 py-0.5 rounded bg-surface shadow-sm border border-border-light block max-w-[120px] truncate">{vendor || 'Unknown'}</span>
+              <span className="text-xs font-semibold text-text-tertiary px-2 py-0.5 rounded bg-surface shadow-sm border border-border-light block max-w-30 truncate">{vendor || 'Unknown'}</span>
            </div>
 
            <div className="p-0">

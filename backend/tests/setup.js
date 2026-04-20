@@ -10,7 +10,7 @@ export const generateTestToken = (userId = 'mockUser123') => {
 };
 
 beforeAll(async () => {
-  // Lock environmental execution limits securely locally dropping Redis/Real DB dependencies.
+  // Keep tests isolated from external cache/real DB dependencies.
   process.env.JWT_SECRET = 'supersecret_test_key';
   process.env.NODE_ENV = 'test';
   

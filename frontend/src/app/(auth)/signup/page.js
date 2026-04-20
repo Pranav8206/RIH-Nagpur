@@ -1,4 +1,4 @@
-import SignUpPage from "@/components/Auth/SignupPage";
+import SignUpPage from "@/components/auth/SignupPage";
 import React from "react";
 
 export const metadata = {

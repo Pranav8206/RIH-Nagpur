@@ -46,12 +46,11 @@ recommendationSchema.methods.calculateRecoveryGap = function() {
 };
 
 // Middleware
-recommendationSchema.pre("save", function(next) {
+recommendationSchema.pre("save", async function() {
   this.updated_at = new Date();
   if (this.status) {
     this.status = this.status.charAt(0).toUpperCase() + this.status.slice(1).toLowerCase();
   }
-  next();
 });
 
 export const Recommendation = model("Recommendation", recommendationSchema);

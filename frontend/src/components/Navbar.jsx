@@ -153,12 +153,12 @@ const Navbar = () => {
             )}
             <button
               onClick={handleCtaClick}
-              className="inline-flex min-w-44 items-center justify-center gap-2 rounded-xl bg-primary-accent px-5 py-2 font-semibold text-text-primary shadow-sm transition-all hover:bg-primary-accent-dark active:scale-95"
+              className="inline-flex cursor-pointer min-w-44 items-center justify-center gap-2 rounded-xl bg-primary-accent px-5 py-2 font-semibold text-text-primary shadow-sm transition-all hover:bg-primary-accent-dark active:scale-95"
             >
               {authReady && showCtaText ? (
                 <>
-                  <span>{ctaLabel}</span>
-                  <ArrowRight size={16} />
+                  <span className="text-white">{ctaLabel}</span>
+                  <ArrowRight size={16} className="text-white" />
                 </>
               ) : (
                 <span className="inline-block h-6 w-33 animate-pulse rounded bg-primary-accent-light/70" />

@@ -15,6 +15,18 @@ const API_BASE_URL =
 
 axios.defaults.baseURL = API_BASE_URL;
 
+axios.interceptors.request.use((config) => {
+  const storedToken =
+    typeof window !== "undefined" ? localStorage.getItem("authToken") : null;
+
+  if (storedToken) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${storedToken}`;
+  }
+
+  return config;
+});
+
 const AppContext = createContext(null);
 
 export const AppProvider = ({ children }) => {

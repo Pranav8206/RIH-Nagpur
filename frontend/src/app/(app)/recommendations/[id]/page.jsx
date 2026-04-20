@@ -2,8 +2,8 @@
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { ChevronLeft, ShieldAlert, CheckCircle, Mail, FileText } from 'lucide-react';
+import { useAppContext } from '@/context/AppContext';
 
 import RecommendationDetailCard from '@/components/recommendations/RecommendationDetailCard';
 import EmailPreview from '@/components/recommendations/EmailPreview';
@@ -16,11 +16,12 @@ export default function RecommendationDetailView() {
     const queryClient = useQueryClient();
     const [actionSync, setActionSync] = useState(false);
     const [templateType, setTemplateType] = useState('email');
+    const { axiosInstance } = useAppContext();
 
     const { data, isLoading, isError } = useQuery({
        queryKey: ['recommendation', id],
        queryFn: async () => {
-           const res = await axios.get(`http://localhost:5000/api/recommendations/${id}`);
+           const res = await axiosInstance.get(`/recommendations/${id}`);
            return res.data;
        }
     });

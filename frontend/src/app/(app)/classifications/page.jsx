@@ -2,33 +2,32 @@
 
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import { Network, RefreshCw } from 'lucide-react';
+import { useAppContext } from '@/context/AppContext';
 
 import ClassificationTable from '@/components/classifications/ClassificationTable';
 import ClassificationFilters from '@/components/classifications/ClassificationFilters';
 
-const fetchClassifications = async ({ queryKey }) => {
-   const [_key, filters, page] = queryKey;
-   const params = new URLSearchParams();
-   
-   if (page) params.append('page', page);
-   params.append('limit', '20');
-   if (filters.leakage_type) params.append('leakage_type', filters.leakage_type);
-   if (filters.impact_level) params.append('impact_level', filters.impact_level);
-   
-   const { data } = await axios.get(`http://localhost:5000/api/classifications?${params.toString()}`);
-   return data;
-};
-
 export default function ClassificationsListPage() {
   const queryClient = useQueryClient();
+   const { axiosInstance } = useAppContext();
   const [filters, setFilters] = useState({ leakage_type: '', impact_level: '' });
   const [page, setPage] = useState(1);
 
   const { data, isLoading, isError, error, isFetching } = useQuery({
     queryKey: ['classifications', filters, page],
-    queryFn: fetchClassifications,
+      queryFn: async ({ queryKey }) => {
+         const [_key, currentFilters, currentPage] = queryKey;
+         const params = new URLSearchParams();
+
+         if (currentPage) params.append('page', currentPage);
+         params.append('limit', '20');
+         if (currentFilters.leakage_type) params.append('leakage_type', currentFilters.leakage_type);
+         if (currentFilters.impact_level) params.append('impact_level', currentFilters.impact_level);
+
+         const { data } = await axiosInstance.get(`/classifications?${params.toString()}`);
+         return data;
+      },
     keepPreviousData: true, 
   });
 
@@ -39,7 +38,7 @@ export default function ClassificationsListPage() {
 
   return (
       <div className="min-h-[calc(100vh-64px)] bg-transparent pb-12 selection:bg-primary-accent-light/50 font-sans">
-         <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+         <main className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8 pt-8">
             <div className="flex justify-between items-center mb-8">
                 <div>
                    <h1 className="text-2xl font-bold tracking-tight text-text-primary flex items-center">
@@ -72,7 +71,7 @@ export default function ClassificationsListPage() {
                 </div>
             )}
 
-            <div className="bg-surface rounded-xl border border-border-light shadow-sm overflow-hidden flex flex-col min-h-[600px] bg-opacity-70 backdrop-filter backdrop-blur-sm">
+            <div className="bg-surface rounded-xl border border-border-light shadow-sm overflow-hidden flex flex-col min-h-150 bg-opacity-70 backdrop-filter backdrop-blur-sm">
                 <ClassificationFilters currentFilters={filters} onFilterChange={handleFilterChange} />
                 
                 <ClassificationTable 

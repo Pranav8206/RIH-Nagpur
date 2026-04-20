@@ -23,9 +23,8 @@ auditLogSchema.index({ user_id: 1 });
 auditLogSchema.index({ entity_id: 1 });
 
 // Middleware
-auditLogSchema.pre("save", function(next) {
+auditLogSchema.pre("save", async function() {
   this.updated_at = new Date();
-  next();
 });
 
 export const AuditLog = model("AuditLog", auditLogSchema);

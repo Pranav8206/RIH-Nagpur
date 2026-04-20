@@ -26,9 +26,8 @@ const dashboardMetricSchema = new Schema(
 dashboardMetricSchema.index({ user_id: 1, date_snapshot: -1 });
 
 // Middleware
-dashboardMetricSchema.pre("save", function(next) {
+dashboardMetricSchema.pre("save", async function() {
   this.updated_at = new Date();
-  next();
 });
 
 export const DashboardMetric = model("DashboardMetric", dashboardMetricSchema);

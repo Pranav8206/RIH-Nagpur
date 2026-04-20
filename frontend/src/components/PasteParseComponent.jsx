@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { Loader2, CheckCircle, AlertTriangle, AlertCircle, RefreshCw } from "lucide-react";
+import { useAppContext } from "@/context/AppContext";
 
 export default function PasteParseComponent({ onSuccess }) {
+  const { axiosInstance } = useAppContext();
   const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
@@ -39,11 +40,9 @@ export default function PasteParseComponent({ onSuccess }) {
     setMissingFields([]);
     
     try {
-      const token = localStorage.getItem("token") || "";
-      const { data } = await axios.post(
-        "/api/import/parse-text",
-        { raw_text: inputText },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const { data } = await axiosInstance.post(
+        "/import/parse-text",
+        { raw_text: inputText }
       );
 
       // We expect HTTP 200, 400, or 422. Since Axios throws on 4xx, we handle success here
@@ -104,18 +103,12 @@ export default function PasteParseComponent({ onSuccess }) {
     setApiError("");
 
     try {
-      const token = localStorage.getItem("token") || "";
       const payload = {
         ...parsedData,
         amount: parseFloat(parsedData.amount),
       };
 
-      await axios.post("/api/transactions", payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axiosInstance.post("/transactions", payload);
 
       setCreatedData(payload);
       setStep("created");
@@ -158,7 +151,7 @@ export default function PasteParseComponent({ onSuccess }) {
               <button
                 onClick={parseData}
                 disabled={loading || !inputText.trim()}
-                className="flex items-center justify-center px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 transition min-w-[120px]"
+                className="flex items-center justify-center px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 transition min-w-30"
               >
                 {loading ? (
                   <>
@@ -179,9 +172,9 @@ export default function PasteParseComponent({ onSuccess }) {
           {/* Status Header */}
           <div className={`flex items-start p-4 border rounded-lg ${step === "success" ? "bg-green-50 border-green-200" : "bg-yellow-50 border-yellow-200"}`}>
             {step === "success" ? (
-              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-3 flex-shrink-0" />
+              <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-3 shrink-0" />
             ) : (
-              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
+              <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3 shrink-0" />
             )}
             <div>
               <h3 className={`text-sm font-bold ${step === "success" ? "text-green-800" : "text-yellow-800"}`}>
@@ -273,7 +266,7 @@ export default function PasteParseComponent({ onSuccess }) {
       {step === "failure" && (
         <div className="space-y-5 flex flex-col items-center animate-in fade-in duration-300">
            <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start w-full">
-               <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
+               <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-3 shrink-0" />
                <div>
                  <h3 className="text-sm font-bold text-red-800">Could not parse text</h3>
                  <p className="text-xs text-red-600 mt-1">{apiError}</p>
@@ -312,7 +305,7 @@ export default function PasteParseComponent({ onSuccess }) {
              <div className="bg-gray-50 rounded-lg p-4 max-w-sm mx-auto text-left border border-gray-200 flex flex-col space-y-2 text-sm">
                  <div className="flex justify-between border-b pb-2">
                    <span className="text-gray-500">Vendor</span>
-                   <span className="font-semibold text-gray-900 truncate max-w-[150px]">{createdData.vendor_name}</span>
+                   <span className="font-semibold text-gray-900 truncate max-w-37.5">{createdData.vendor_name}</span>
                  </div>
                  <div className="flex justify-between border-b pb-2">
                    <span className="text-gray-500">Amount</span>
