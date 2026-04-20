@@ -20,8 +20,8 @@ const Footer = () => {
     return null;
 
   return (
-    <footer className="w-full px-4 pb-6 mt-12">
-      <div className="max-w-7xl mx-auto bg-surface rounded-3xl shadow-sm border border-border-light p-8 md:p-12">
+    <footer className="w-full">
+      <div className="w-full mx-auto bg-surface shadow-sm border border-border-light p-6 md:p-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           {/* Brand Section */}
           <div className="space-y-4">
@@ -117,14 +117,6 @@ const Footer = () => {
           <p className="text-text-tertiary text-sm">
             © 2026 SpendShield. All rights reserved.
           </p>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-text-tertiary font-medium">
-              Verified for:
-            </span>
-            <div className="bg-primary-accent-light/50 text-primary-accent text-xs px-3 py-1 rounded-full font-bold">
-              Enterprise Ready
-            </div>
-          </div>
         </div>
       </div>
     </footer>
