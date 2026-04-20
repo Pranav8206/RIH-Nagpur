@@ -7,14 +7,14 @@ export default function PriorityBadge({ level }) {
     
     let colorClass, dotColor;
     if (normalized === 'high' || normalized === 'critical') {
-        colorClass = 'bg-red-50 text-red-800 border-red-200';
+        colorClass = 'bg-error/10 text-red-800 border-red-200';
         dotColor = 'bg-red-500';
     } else if (normalized === 'medium') {
         colorClass = 'bg-orange-50 text-orange-800 border-orange-200';
         dotColor = 'bg-orange-500';
     } else {
-        colorClass = 'bg-emerald-50 text-emerald-800 border-emerald-200';
-        dotColor = 'bg-emerald-500';
+        colorClass = 'bg-primary-accent-light/30 text-emerald-800 border-primary-accent-light';
+        dotColor = 'bg-primary-accent';
     }
 
     return (
