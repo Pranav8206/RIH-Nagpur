@@ -128,9 +128,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-6 py-3">
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2 cursor-pointer">
-            <ShieldAlert className="text-primary-accent" size={28} />
+            <Image src="/logo.png" alt="Logo" width={40} height={40} />
             <span className="text-2xl font-bold text-text-primary tracking-tight">
-              Expense<span className="text-primary-accent">Guard</span>
+              Spend<span className="text-primary-accent">Shield</span>
             </span>
           </Link>
 

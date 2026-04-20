@@ -10,10 +10,14 @@ import {
   MapPin,
   ShieldAlert,
 } from "lucide-react";
+import Image from "next/image";
 
 const Footer = () => {
   const pathname = usePathname();
-  if (pathname?.match(/^\/(dashboard|anomalies|classifications|recommendations)/)) return null;
+  if (
+    pathname?.match(/^\/(dashboard|anomalies|classifications|recommendations)/)
+  )
+    return null;
 
   return (
     <footer className="w-full px-4 pb-6 mt-12">
@@ -22,13 +26,15 @@ const Footer = () => {
           {/* Brand Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <ShieldAlert className="text-primary-accent" size={28} />
+              <Image src="/logo.png" alt="Logo" width={40} height={40} />
               <span className="text-2xl font-bold text-text-primary tracking-tight">
-                Expense<span className="text-primary-accent">Guard</span>
+                Spend<span className="text-primary-accent">Shield</span>
               </span>
             </div>
             <p className="text-text-tertiary leading-relaxed">
-              Advanced algorithmic anomaly detection system built to protect your corporate expenditures and optimize financial recovery pools automatically.
+              Advanced algorithmic anomaly detection system built to protect
+              your corporate expenditures and optimize financial recovery pools
+              automatically.
             </p>
             <div className="flex gap-4">
               <div className="p-2 bg-background rounded-lg hover:bg-surface-hover transition-colors cursor-pointer">
@@ -109,7 +115,7 @@ const Footer = () => {
 
         <div className="mt-12 pt-8 border-t border-border-light flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-text-tertiary text-sm">
-            © 2026 ExpenseGuard. All rights reserved.
+            © 2026 SpendShield. All rights reserved.
           </p>
           <div className="flex items-center gap-2">
             <span className="text-sm text-text-tertiary font-medium">

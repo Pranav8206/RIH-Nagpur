@@ -84,7 +84,7 @@ export default function Home() {
             <div className="relative h-full w-full rounded-3xl overflow-hidden border border-slate-200/50 shadow-2xl bg-white/50 backdrop-blur-sm p-2">
               <Image 
                 src="/hero-dashboard.png" 
-                alt="ExpenseGuard Dashboard Preview"
+                alt="SpendShield Dashboard Preview"
                 fill
                 priority
                 className="object-cover rounded-2xl shadow-inner"
@@ -191,7 +191,7 @@ export default function Home() {
               <div className="max-w-xl text-center md:text-left">
                 <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">Ready to secure your expenditure?</h2>
                 <p className="text-blue-100 text-lg sm:text-xl opacity-90 mb-0">
-                  Join hundreds of financial control teams leveraging ExpenseGuard today.
+                  Join hundreds of financial control teams leveraging SpendShield today.
                 </p>
               </div>
               <div className="shrink-0 flex gap-4 w-full md:w-auto">
