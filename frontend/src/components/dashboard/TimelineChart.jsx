@@ -6,10 +6,10 @@ import { Calendar } from 'lucide-react';
 export default function TimelineChart({ data = [], isLoading }) {
    if (isLoading) {
         return (
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm h-[400px] flex items-center justify-center">
+          <div className="bg-surface p-5 rounded-xl border border-border-light shadow-sm h-[400px] flex items-center justify-center">
              <div className="animate-pulse w-full px-8 flex items-end space-x-2 h-48">
                {[...Array(12)].map((_, i) => (
-                 <div key={i} className="flex-1 bg-gray-50 rounded-t border border-gray-100 border-b-0" style={{ height: `${Math.max(20, Math.random() * 100)}%` }}></div>
+                 <div key={i} className="flex-1 bg-surface-hover rounded-t border border-border-light border-b-0" style={{ height: `${Math.max(20, Math.random() * 100)}%` }}></div>
                ))}
              </div>
           </div>
@@ -19,16 +19,16 @@ export default function TimelineChart({ data = [], isLoading }) {
    const formatCurrency = (val) => `$${(val / 1000).toFixed(0)}k`;
 
    return (
-       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-[400px] flex flex-col">
+       <div className="bg-surface p-6 rounded-xl border border-border-light shadow-sm h-[400px] flex flex-col">
            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 tracking-tight">Timeline Mapping</h3>
+              <h3 className="text-lg font-semibold text-text-primary tracking-tight">Timeline Mapping</h3>
               <div className="relative">
-                 <select className="appearance-none pl-8 pr-8 py-1.5 text-xs font-medium border border-gray-200 rounded-lg text-gray-600 bg-gray-50 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 outline-none cursor-pointer">
+                 <select className="appearance-none pl-8 pr-8 py-1.5 text-xs font-medium border border-border-light rounded-lg text-text-secondary bg-surface-hover hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100 outline-none cursor-pointer">
                      <option>Last 30 Days</option>
                      <option>Last Quarter</option>
                      <option>Year to Date</option>
                  </select>
-                 <Calendar className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2 pointer-events-none" />
+                 <Calendar className="w-3.5 h-3.5 text-text-tertiary absolute left-2.5 top-2 pointer-events-none" />
               </div>
            </div>
            
