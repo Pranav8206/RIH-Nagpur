@@ -9,7 +9,7 @@ export default function ClassificationDetailCard({ classification }) {
   const formatCurrency = (amt) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: "INR",
     }).format(amt || 0);
 
   return (

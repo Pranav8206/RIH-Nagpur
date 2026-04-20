@@ -7,6 +7,7 @@ import {
   ShieldAlert,
   Tags,
   Lightbulb,
+  CalendarDays,
   Settings,
   LogOut,
   UploadCloud,
@@ -35,6 +36,7 @@ const Sidebar = () => {
   const navigation = [
     { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Import", href: "/import", icon: UploadCloud },
+    { name: "Calendar", href: "/transactions", icon: CalendarDays },
     { name: "Anomalies", href: "/anomalies", icon: ShieldAlert },
     { name: "Classifications", href: "/classifications", icon: Tags },
     { name: "Recommend", href: "/recommendations", icon: Lightbulb },

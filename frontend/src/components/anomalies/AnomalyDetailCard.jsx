@@ -16,7 +16,7 @@ export default function AnomalyDetailCard({ anomaly, transaction }) {
   const formatCurrency = (amt) =>
     new Intl.NumberFormat("en-US", {
       style: "currency",
-      currency: "USD",
+      currency: "INR",
     }).format(amt || 0);
   const formatDate = (dateStr) =>
     dateStr

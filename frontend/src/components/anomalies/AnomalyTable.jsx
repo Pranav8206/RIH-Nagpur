@@ -18,7 +18,7 @@ export default function AnomalyTable({ data = [], isLoading, selectedIds, onSele
     );
   }
 
-  const formatCurrency = (amt) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amt || 0);
+  const formatCurrency = (amt) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'INR' }).format(amt || 0);
   const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString() : 'N/A';
 
   const getSeverityBadge = (severity) => {

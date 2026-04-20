@@ -16,7 +16,7 @@ export default function TimelineChart({ data = [], isLoading }) {
         );
    }
 
-   const formatCurrency = (val) => `$${(val / 1000).toFixed(0)}k`;
+   const formatCurrency = (val) => ` ₹${(val / 1000).toFixed(0)}k`;
 
    return (
     <div className="bg-surface p-6 rounded-xl border border-border-light shadow-sm h-100 min-h-100 min-w-0 flex flex-col overflow-hidden">
@@ -41,9 +41,9 @@ export default function TimelineChart({ data = [], isLoading }) {
                    <Tooltip 
                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', backgroundColor: 'rgba(255, 255, 255, 0.98)' }}
                        formatter={(val, name) => {
-                           if(name === 'total_spend') return [`$${val.toLocaleString()}`, 'Total Volume'];
+                           if(name === 'total_spend') return [` ₹${val.toLocaleString()}`, 'Total Volume'];
                            if(name === 'anomalies') return [val, 'Anomalies Hit'];
-                           if(name === 'recovered') return [`$${val.toLocaleString()}`, 'Recovered Volume'];
+                           if(name === 'recovered') return [` ₹${val.toLocaleString()}`, 'Recovered Volume'];
                            return [val, name];
                        }}
                    />

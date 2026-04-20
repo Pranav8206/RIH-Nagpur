@@ -16,7 +16,7 @@ export default function RecommendationTable({ data = [], isLoading }) {
       return <EmptyState message="No execution nodes isolated or matching structure bounds natively." icon={ShieldCheck} />;
   }
 
-  const formatCurrency = (amt) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amt || 0);
+  const formatCurrency = (amt) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'INR' }).format(amt || 0);
 
   return (
     <div className="overflow-x-auto flex-1 min-h-[500px]">

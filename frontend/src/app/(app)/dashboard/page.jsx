@@ -143,7 +143,7 @@ export default function DashboardPage() {
           />
           <KPICard
             title="Corporate Spend"
-            value={`$${((metrics?.total_spend || 0) / 1000).toFixed(1)}k`}
+            value={` ₹${((metrics?.total_spend || 0) / 1000).toFixed(1)}k`}
             trend={2.4}
             isPositiveTrend={false}
             isLoading={loading}
@@ -157,7 +157,7 @@ export default function DashboardPage() {
           />
           <KPICard
             title="Extracted Recovery Pool"
-            value={`$${(metrics?.total_recovered + (metrics?.recovery_potential || 0) || 0).toLocaleString()}`}
+            value={` ₹${(metrics?.total_recovered + (metrics?.recovery_potential || 0) || 0).toLocaleString()}`}
             isLoading={loading}
             hasAction={true}
             onActionClick={() => alert("Bulk execution pipeline triggered!")}

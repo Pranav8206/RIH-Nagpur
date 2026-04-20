@@ -15,7 +15,7 @@ export default function ClassificationTable({ data = [], isLoading }) {
       return <EmptyState message="No classifications mapped via DB currently." icon={ShieldAlert} />;
   }
 
-  const formatCurrency = (amt) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amt || 0);
+  const formatCurrency = (amt) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'INR' }).format(amt || 0);
 
   return (
     <div className="overflow-x-auto flex-1 min-h-[500px]">
