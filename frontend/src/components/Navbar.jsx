@@ -10,7 +10,6 @@ import {
   CalendarCheck2,
   Settings,
   LogOut,
-  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -124,7 +123,11 @@ const Navbar = () => {
   if (shouldHideNavbar) return null;
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-background border-b border-border-light shadow-sm">
+    <nav
+      className={`sticky top-0 z-50 w-full bg-background border-b border-border-light shadow-sm ${
+        shouldHideNavbar ? "hidden" : ""
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-6 py-3">
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center gap-2 cursor-pointer">
