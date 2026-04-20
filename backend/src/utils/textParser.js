@@ -116,6 +116,18 @@ export const extractVendor = (text, format) => {
   return null;
 };
 
+export const extractInvoiceNumber = (text) => {
+  const invoiceRegex = /(?:invoice(?:\s*number)?|inv(?:oice)?\s*(?:no|number|#)?|bill(?:ing)?\s*(?:no|number|#)?)\s*[:=\-]?\s*([A-Za-z0-9][A-Za-z0-9\-/_.]*)/i;
+  const match = text.match(invoiceRegex);
+  if (match && match[1]) return match[1].trim();
+
+  const fallbackRegex = /\bINV[-_/]?[A-Z0-9]+\b/i;
+  const fallbackMatch = text.match(fallbackRegex);
+  if (fallbackMatch) return fallbackMatch[0].trim();
+
+  return null;
+};
+
 export const matchCategory = (text) => {
   const lowerCaseText = text.toLowerCase();
   
@@ -142,6 +154,9 @@ export const parseRawText = (raw_text) => {
   // Extract
   const vendor = extractVendor(cleanText, format_detected);
   if (vendor) parsed.vendor_name = vendor;
+
+  const invoiceNumber = extractInvoiceNumber(cleanText);
+  if (invoiceNumber) parsed.invoice_number = invoiceNumber;
 
   const amount = extractAmount(cleanText);
   if (amount !== null) parsed.amount = amount;

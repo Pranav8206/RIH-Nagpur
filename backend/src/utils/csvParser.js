@@ -1,6 +1,27 @@
 import fs from "fs";
 import csv from "csv-parser";
 
+const detectDelimiter = (filePath) => {
+  const fileContent = fs.readFileSync(filePath, "utf8");
+  const firstNonEmptyLine = fileContent.split(/\r?\n/).find((line) => line.trim());
+
+  if (!firstNonEmptyLine) return ",";
+
+  const candidates = [",", "\t", ";"];
+  let bestDelimiter = ",";
+  let bestCount = -1;
+
+  candidates.forEach((delimiter) => {
+    const count = firstNonEmptyLine.split(delimiter).length - 1;
+    if (count > bestCount) {
+      bestCount = count;
+      bestDelimiter = delimiter;
+    }
+  });
+
+  return bestDelimiter;
+};
+
 /**
  * Normalizes headers
  * Example mapping logic for "vendor", "supplier" => "vendor_name"
@@ -114,10 +135,12 @@ export const validateRow = (row) => {
 export const readAndParseCSV = (filePath) => {
   return new Promise((resolve, reject) => {
     const results = [];
+    const delimiter = detectDelimiter(filePath);
     
     fs.createReadStream(filePath)
       .pipe(
         csv({
+          separator: delimiter,
           mapHeaders: ({ header }) => normalizeHeader(header)
         })
       )

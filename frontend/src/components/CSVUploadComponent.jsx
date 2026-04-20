@@ -22,7 +22,13 @@ export default function CSVUploadComponent({ onSuccess }) {
     { value: "vendor_name", label: "Vendor Name" },
     { value: "amount", label: "Amount" },
     { value: "date", label: "Date" },
+    { value: "invoice_number", label: "Invoice Number" },
     { value: "category", label: "Category" },
+    { value: "department", label: "Department" },
+    { value: "payment_method", label: "Payment Method" },
+    { value: "description", label: "Description" },
+    { value: "approver_id", label: "Approver ID" },
+    { value: "status", label: "Status" },
   ];
 
   // Helper for auto-mapping
@@ -31,7 +37,13 @@ export default function CSVUploadComponent({ onSuccess }) {
     if (raw.includes("vendor") || raw.includes("supplier") || raw.includes("merchant")) return "vendor_name";
     if (raw.includes("amount") || raw.includes("cost") || raw.includes("price") || raw.includes("total")) return "amount";
     if (raw.includes("date") || raw.includes("time")) return "date";
+    if (raw.includes("invoice") || raw.includes("invno") || raw.includes("invoiceno") || raw.includes("invoiceid")) return "invoice_number";
     if (raw.includes("cat") || raw.includes("type")) return "category";
+    if (raw.includes("department") || raw.includes("dept") || raw.includes("team")) return "department";
+    if (raw.includes("payment") || raw.includes("method") || raw.includes("mode")) return "payment_method";
+    if (raw.includes("description") || raw.includes("desc") || raw.includes("memo") || raw.includes("note")) return "description";
+    if (raw.includes("approver") || raw.includes("approverid") || raw.includes("approvedby")) return "approver_id";
+    if (raw.includes("status") || raw.includes("state")) return "status";
     return "Skip";
   };
 
@@ -52,7 +64,6 @@ export default function CSVUploadComponent({ onSuccess }) {
     Papa.parse(csvFile, {
       header: true,
       skipEmptyLines: true,
-      preview: 10, // Preview first 10 rows
       complete: (results) => {
         const headers = results.meta.fields || [];
         setParsedHeaders(headers);
@@ -84,7 +95,7 @@ export default function CSVUploadComponent({ onSuccess }) {
       });
       return newRow;
     });
-    setPreviewData(mapped);
+    setPreviewData(mapped.slice(0, 10));
   }, [mappings, parsedRows]);
 
   const isValidRow = (row) => {
@@ -111,8 +122,34 @@ export default function CSVUploadComponent({ onSuccess }) {
     setIsUploading(true);
     setUploadResult(null);
 
+    const mappedRows = parsedRows.map((row) => {
+      const mappedRow = {};
+      Object.keys(row).forEach((colHeader) => {
+        const mappedKey = mappings[colHeader];
+        if (mappedKey && mappedKey !== "Skip") {
+          mappedRow[mappedKey] = row[colHeader];
+        }
+      });
+      return mappedRow;
+    });
+
+    const rowsToUpload = mappedRows.filter((row) => Object.keys(row).length > 0);
+
+    if (rowsToUpload.length === 0) {
+      setUploadResult({
+        success: false,
+        summary: null,
+        errors: [{ row: "Mapping", errors: ["All columns are set to Skip. Map at least vendor_name, amount, and date."] }],
+      });
+      setIsUploading(false);
+      return;
+    }
+
+    const csvContent = Papa.unparse(rowsToUpload);
+    const mappedFile = new File([csvContent], file.name, { type: "text/csv;charset=utf-8;" });
+
     const formData = new FormData();
-    formData.append("transactions_file", file);
+    formData.append("transactions_file", mappedFile);
 
     try {
       const response = await axiosInstance.post("/import/csv", formData, {
@@ -123,7 +160,9 @@ export default function CSVUploadComponent({ onSuccess }) {
 
       setUploadResult({
         success: response.data.success,
+        message: response.data.message,
         summary: response.data.summary,
+        diagnostics: response.data.diagnostics,
         errors: response.data.errors || [],
       });
       
@@ -133,7 +172,9 @@ export default function CSVUploadComponent({ onSuccess }) {
     } catch (err) {
       setUploadResult({
         success: false,
+        message: err.response?.data?.message || err.message,
         summary: null,
+        diagnostics: null,
         errors: err.response?.data?.errors || [{ row: "Server", errors: [err.response?.data?.message || err.message] }],
       });
     } finally {
@@ -284,6 +325,10 @@ export default function CSVUploadComponent({ onSuccess }) {
               <h3 className={`text-xl font-bold ${uploadResult.success ? 'text-green-800' : 'text-red-800'}`}>
                 {uploadResult.success ? 'Import Complete!' : 'Import Failed'}
               </h3>
+
+              {uploadResult.message && (
+                <p className="text-sm text-gray-700 mt-1 max-w-xl">{uploadResult.message}</p>
+              )}
               
               {uploadResult.summary && (
                 <div className="flex items-center justify-center space-x-6 mt-3 text-sm">
@@ -306,6 +351,12 @@ export default function CSVUploadComponent({ onSuccess }) {
                      <span className="text-xl font-bold">{uploadResult.summary.skipped}</span>
                      Skipped (Dups)
                    </div>
+                </div>
+              )}
+
+              {uploadResult.diagnostics && (
+                <div className="mt-3 text-xs text-gray-600">
+                  Valid: {uploadResult.summary?.valid ?? 0} | Queued: {uploadResult.diagnostics.queued_for_insert ?? 0} | Existing in DB: {uploadResult.diagnostics.existing_in_db ?? 0}
                 </div>
               )}
             </div>
