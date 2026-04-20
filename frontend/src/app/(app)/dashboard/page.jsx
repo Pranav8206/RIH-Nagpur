@@ -93,39 +93,29 @@ export default function DashboardPage() {
    };
 
    return (
-      <div className="min-h-screen bg-[#F8FAFC] text-slate-900 pb-12 font-sans selection:bg-blue-100">
-          {/* Top Navbar */}
-          <header className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm backdrop-blur-md bg-opacity-90">
-             <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                   <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                   </div>
-                   <h1 className="text-xl font-bold tracking-tight text-slate-800">
-                      Expense <span className="text-blue-600">Guard</span>
-                   </h1>
-                </div>
-
-                <div className="flex items-center space-x-5">
-                   <button 
-                      onClick={fetchDashboardData}
-                      className="text-gray-400 hover:text-blue-600 transition-colors p-1"
-                      title="Sync Dashboard"
-                   >
-                     <RefreshCcw className={`w-5 h-5 ${loading ? 'animate-spin text-blue-500' : ''}`} />
-                   </button>
-                   <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white text-sm font-bold shadow-md cursor-pointer hover:shadow-lg transition-shadow border-2 border-white">
-                      JD
-                   </div>
+      <div className="min-h-screen bg-transparent text-text-primary pb-12 font-sans selection:bg-primary-accent-light/50">
+          <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 pt-6 max-w-[1600px] mx-auto mb-2">
+             <h2 className="text-2xl font-bold text-text-primary">Dashboard Overview</h2>
+             <div className="flex items-center space-x-5">
+                <button 
+                   onClick={fetchDashboardData}
+                   className="flex items-center gap-2 text-sm font-medium text-text-secondary bg-surface border border-border-light px-4 py-2 rounded-lg shadow-sm hover:bg-surface-hover transition"
+                   title="Sync Dashboard"
+                >
+                  <RefreshCcw className={`w-4 h-4 ${loading ? 'animate-spin text-primary-accent' : ''}`} />
+                  <span className="hidden sm:inline">Sync Data</span>
+                </button>
+                <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-primary-accent to-secondary-accent flex items-center justify-center text-surface text-sm font-bold shadow-md cursor-pointer hover:shadow-lg transition-shadow border-2 border-surface">
+                   JD
                 </div>
              </div>
-          </header>
+          </div>
 
           <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8">
              
              {/* Global Error Handle */}
              {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start text-red-700 shadow-sm animate-in fade-in slide-in-from-top-4">
+                <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-xl flex items-start text-error shadow-sm animate-in fade-in slide-in-from-top-4">
                    <AlertTriangle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
                    <div>
                      <h4 className="font-semibold text-sm">System Synchronization Error</h4>

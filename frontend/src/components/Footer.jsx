@@ -1,4 +1,6 @@
+"use client";
 import React from "react";
+import { usePathname } from "next/navigation";
 import {
   Facebook,
   Twitter,
@@ -6,10 +8,13 @@ import {
   Mail,
   Phone,
   MapPin,
-  Tractor,
+  ShieldAlert,
 } from "lucide-react";
 
 const Footer = () => {
+  const pathname = usePathname();
+  if (pathname?.match(/^\/(dashboard|anomalies|classifications|recommendations)/)) return null;
+
   return (
     <footer className="w-full px-4 pb-6 mt-12">
       <div className="max-w-7xl mx-auto bg-surface rounded-3xl shadow-sm border border-border-light p-8 md:p-12">
@@ -17,13 +22,13 @@ const Footer = () => {
           {/* Brand Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <Tractor className="text-success" size={28} />
-              <span className="text-2xl font-bold text-text-primary">
-                Project<span className="text-success">Name</span>
+              <ShieldAlert className="text-primary-accent" size={28} />
+              <span className="text-2xl font-bold text-text-primary tracking-tight">
+                Expense<span className="text-primary-accent">Guard</span>
               </span>
             </div>
             <p className="text-text-tertiary leading-relaxed">
-              Lorem ipsum dolor sit amet consectetur adipisicing elit. At praesentium earum repudiandae molestiae consequuntur illo aliquid consectetur saepe voluptas esse commodi dolorum dolorem nulla quas est quis, aut odit sit natus magnam. 
+              Advanced algorithmic anomaly detection system built to protect your corporate expenditures and optimize financial recovery pools automatically.
             </p>
             <div className="flex gap-4">
               <div className="p-2 bg-background rounded-lg hover:bg-surface-hover transition-colors cursor-pointer">
@@ -104,14 +109,14 @@ const Footer = () => {
 
         <div className="mt-12 pt-8 border-t border-border-light flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-text-tertiary text-sm">
-            © 2026 ProjectName. All rights reserved.
+            © 2026 ExpenseGuard. All rights reserved.
           </p>
           <div className="flex items-center gap-2">
             <span className="text-sm text-text-tertiary font-medium">
               Verified for:
             </span>
-            <div className="bg-success/10 text-success text-xs px-3 py-1 rounded-full font-bold">
-              Sustainable Farming
+            <div className="bg-primary-accent-light/50 text-primary-accent text-xs px-3 py-1 rounded-full font-bold">
+              Enterprise Ready
             </div>
           </div>
         </div>

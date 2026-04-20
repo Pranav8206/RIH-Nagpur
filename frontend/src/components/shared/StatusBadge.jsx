@@ -7,17 +7,17 @@ export default function StatusBadge({ status }) {
     // Normalize string variants seamlessly mapping fallback structures
     const normalized = status.toLowerCase();
     
-    let colorClass = 'bg-gray-100 text-gray-700 border-gray-300';
+    let colorClass = 'bg-surface-hover text-text-secondary border-gray-300';
     let Icon = Clock;
 
     if (['resolved', 'executed', 'approved', 'completed'].includes(normalized)) {
-        colorClass = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+        colorClass = 'bg-primary-accent-light/30 text-emerald-800 border-primary-accent-light';
         Icon = CheckCircle;
     } else if (['rejected', 'flagged', 'failed', 'dismissed'].includes(normalized)) {
-        colorClass = 'bg-red-50 text-red-800 border-red-200';
+        colorClass = 'bg-error/10 text-red-800 border-red-200';
         Icon = AlertCircle;
     } else if (['reviewed', 'in progress', 'action required'].includes(normalized)) {
-        colorClass = 'bg-blue-50 text-blue-800 border-blue-200';
+        colorClass = 'bg-primary-accent-light/30 text-blue-800 border-primary-accent-light';
         Icon = AlertCircle;
     }
 

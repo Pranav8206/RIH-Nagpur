@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Menu,
   X,
-  Tractor,
+  ShieldAlert,
   ArrowRight,
   LayoutDashboard,
   Wrench,
@@ -13,30 +13,22 @@ import {
   Trash2,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAppContext } from "@/context/AppContext";
 import toast from "react-hot-toast";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showCtaText, setShowCtaText] = useState(false);
   const [menuActionLoading, setMenuActionLoading] = useState(false);
   const dropdownRef = useRef(null);
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, user, authReady, logout, deleteAccount } =
     useAppContext();
 
-  useEffect(() => {
-    const onScroll = () => {
-      setIsScrolled(window.scrollY > 0);
-    };
-
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  if (pathname?.match(/^\/(dashboard|anomalies|classifications|recommendations)/)) return null;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -125,47 +117,15 @@ const Navbar = () => {
   };
 
   return (
-    <nav
-      className={`fixed left-0 right-0 z-50 px-4 transition-all duration-300 ${
-        isScrolled ? "top-3" : "top-0"
-      }`}
-    >
-      <div
-        className={`max-w-7xl mx-auto px-6 py-3 transition-all duration-300 ${
-          isScrolled
-            ? "rounded-2xl border border-border-light/60 bg-surface/70 shadow-xl backdrop-blur-md"
-            : "rounded-none border border-transparent bg-surface"
-        }`}
-      >
+    <nav className="sticky top-0 z-50 w-full bg-background border-b border-border-light shadow-sm">
+      <div className="max-w-7xl mx-auto px-6 py-3">
         <div className="flex justify-between items-center">
-          {/* Logo Section */}
           <Link href="/" className="flex items-center gap-2 cursor-pointer">
+            <ShieldAlert className="text-primary-accent" size={28} />
             <span className="text-2xl font-bold text-text-primary tracking-tight">
-              Project<span className="text-success">Name</span>
+              Expense<span className="text-primary-accent">Guard</span>
             </span>
           </Link>
-
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/"
-              className="font-medium text-text-secondary hover:text-text-primary transition-colors"
-            >
-              Link1
-            </Link>
-            <Link
-              href="/"
-              className="font-medium text-text-secondary hover:text-text-primary transition-colors"
-            >
-              Link2
-            </Link>
-            <Link
-              href="/"
-              className="font-medium text-text-secondary hover:text-text-primary transition-colors"
-            >
-              Link3
-            </Link>
-          </div>
 
           {/* Desktop CTA + Profile */}
           <div
@@ -264,30 +224,6 @@ const Navbar = () => {
         {/* Mobile Menu Dropdown */}
         {isOpen && (
           <div className="md:hidden mt-4 pb-4 space-y-4 animate-in slide-in-from-top duration-200">
-            <div className="flex flex-col gap-4">
-              <Link
-                href="/"
-                className="font-medium text-primary-accent-dark"
-                onClick={() => setIsOpen(false)}
-              >
-                Link1
-              </Link>
-              <Link
-                href="/"
-                className="font-medium text-text-secondary"
-                onClick={() => setIsOpen(false)}
-              >
-                Link2
-              </Link>
-              <Link
-                href="/"
-                className="font-medium text-text-secondary"
-                onClick={() => setIsOpen(false)}
-              >
-                Link3
-              </Link>
-            </div>
-            <hr className="border-border-light" />
             <div className="flex flex-col gap-3">
               <button
                 onClick={() => {
