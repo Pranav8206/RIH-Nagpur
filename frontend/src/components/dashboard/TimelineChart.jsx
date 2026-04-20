@@ -6,7 +6,7 @@ import { Calendar } from 'lucide-react';
 export default function TimelineChart({ data = [], isLoading }) {
    if (isLoading) {
         return (
-          <div className="bg-surface p-5 rounded-xl border border-border-light shadow-sm h-[400px] flex items-center justify-center">
+          <div className="bg-surface p-5 rounded-xl border border-border-light shadow-sm h-100 flex items-center justify-center">
              <div className="animate-pulse w-full px-8 flex items-end space-x-2 h-48">
                {[...Array(12)].map((_, i) => (
                  <div key={i} className="flex-1 bg-surface-hover rounded-t border border-border-light border-b-0" style={{ height: `${Math.max(20, Math.random() * 100)}%` }}></div>
@@ -19,7 +19,7 @@ export default function TimelineChart({ data = [], isLoading }) {
    const formatCurrency = (val) => `$${(val / 1000).toFixed(0)}k`;
 
    return (
-       <div className="bg-surface p-6 rounded-xl border border-border-light shadow-sm h-[400px] flex flex-col">
+    <div className="bg-surface p-6 rounded-xl border border-border-light shadow-sm h-100 min-h-100 min-w-0 flex flex-col overflow-hidden">
            <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold text-text-primary tracking-tight">Timeline Mapping</h3>
               <div className="relative">
@@ -32,7 +32,8 @@ export default function TimelineChart({ data = [], isLoading }) {
               </div>
            </div>
            
-           <ResponsiveContainer width="100%" height="100%">
+           <div className="min-h-0 min-w-0 flex-1">
+           <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={220}>
                <LineChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                    <XAxis dataKey="dates" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} dy={12} />
@@ -60,6 +61,7 @@ export default function TimelineChart({ data = [], isLoading }) {
                    <Line type="monotone" dataKey="recovered" name="Recovered" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ r: 5, fill: '#059669' }} />
                </LineChart>
            </ResponsiveContainer>
+           </div>
        </div>
    );
 }
