@@ -1,4 +1,5 @@
 import express from "express";
+import { protect } from "../middleware/auth.middleware.js";
 import {
   createTransaction,
   getTransactions,
@@ -19,6 +20,8 @@ const router = express.Router();
  * Usually implemented via: app.use('/api/transactions', jwtMiddleware, transactionRoutes)
  * That guarantees `req.user.id` exists prior to hitting controllers.
  */
+
+router.use(protect);
 
 router.post("/", validateRequest(createTransactionSchema, "body"), createTransaction);
 router.get("/", getTransactions);

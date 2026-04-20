@@ -80,7 +80,6 @@ export default function AnomaliesListPage() {
             )}
 
             <div className="bg-surface rounded-xl border border-border-light shadow-sm overflow-hidden flex flex-col min-h-150 bg-opacity-70 backdrop-filter backdrop-blur-sm">
-                
                 <AnomalyFilters currentFilters={filters} onFilterChange={handleFilterChange} />
                 
                 {selectedIds.length > 0 && (

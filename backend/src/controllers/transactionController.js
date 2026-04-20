@@ -40,7 +40,7 @@ export const createTransaction = async (req, res) => {
 
     const existing = await Transaction.findOne({ invoice_number: body.invoice_number, is_deleted: { $ne: true } });
     if (existing) {
-        return res.status(400).json({ success: false, message: "Validation Error", error: `Invoice number ${body.invoice_number} already exists` });
+        return res.status(400).json({ success: false, message: "2Validation Error", error: `Invoice number ${body.invoice_number} already exists` });
     }
 
     const transaction = new Transaction({

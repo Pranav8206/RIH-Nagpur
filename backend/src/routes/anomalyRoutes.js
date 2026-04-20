@@ -1,4 +1,5 @@
 import express from "express";
+import { protect } from "../middleware/auth.middleware.js";
 import {
   detectAnomaliesFlow,
   getAnomalies,
@@ -14,6 +15,8 @@ const router = express.Router();
  * Endpoints
  * Ensure this route is mounted below JWT middleware (e.g., app.use('/api/anomalies', auth, anomalyRoutes))
  */
+
+router.use(protect);
 
 router.post("/detect", detectAnomaliesFlow);
 router.get("/", getAnomalies);
