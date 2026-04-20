@@ -5,11 +5,11 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 export default function DepartmentChart({ data = [], isLoading }) {
     if (isLoading) {
         return (
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm h-[400px] flex items-center justify-center">
+          <div className="bg-surface p-5 rounded-xl border border-border-light shadow-sm h-[400px] flex items-center justify-center">
             <div className="animate-pulse space-y-4 w-full px-8">
                <div className="h-4 bg-gray-200 rounded w-1/4 mb-8"></div>
                {[...Array(5)].map((_, i) => (
-                 <div key={i} className="h-8 bg-gray-50 rounded w-full border border-gray-100"></div>
+                 <div key={i} className="h-8 bg-surface-hover rounded w-full border border-border-light"></div>
                ))}
             </div>
           </div>
@@ -19,8 +19,8 @@ export default function DepartmentChart({ data = [], isLoading }) {
     const formatCurrency = (val) => `$${(val / 1000).toFixed(1)}k`;
 
     return (
-        <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm h-[400px] flex flex-col">
-            <h3 className="text-lg font-semibold text-gray-800 mb-6 tracking-tight">Internal Department Spend vs Risk</h3>
+        <div className="bg-surface p-6 rounded-xl border border-border-light shadow-sm h-[400px] flex flex-col">
+            <h3 className="text-lg font-semibold text-text-primary mb-6 tracking-tight">Internal Department Spend vs Risk</h3>
             <ResponsiveContainer width="100%" height="100%">
                <BarChart data={data} layout="vertical" margin={{ top: 0, right: 30, left: 20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
