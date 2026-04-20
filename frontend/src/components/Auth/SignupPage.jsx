@@ -183,7 +183,7 @@ export default function SignUpPage() {
           <div className="absolute inset-0 bg-linear-to-br from-black/60 via-black/40 to-black/50" />
           <div className="relative z-10">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/80">
-              Project Name
+              SpendShield
             </p>
             <h1 className="font-editorial mt-3 text-5xl leading-tight text-white">
               Join our community today

@@ -130,7 +130,7 @@ export default function LoginPage() {
           <div className="absolute inset-0 bg-linear-to-br from-black/70 via-black/40 to-black/20" />
           <div className="absolute inset-0 flex flex-col justify-end p-10 text-white">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/80">
-              Project Name
+              SpendShield
             </p>
             <h1 className="font-editorial mt-3 text-5xl leading-tight">
               Welcome Back
