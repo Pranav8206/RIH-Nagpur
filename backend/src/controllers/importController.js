@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import { Transaction } from "../models/transaction.model.js";
 import { AuditLog } from "../models/auditLog.model.js";
 import { readAndParseCSV, validateRow } from "../utils/csvParser.js";
+import { parseRawText } from "../utils/textParser.js";
 
 export const importCSV = async (req, res, next) => {
   try {
@@ -146,3 +147,78 @@ export const importCSV = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * Controller: parseText
+ * Endpoint: POST /api/import/parse-text
+ */
+export const parseText = async (req, res, next) => {
+  try {
+    const { raw_text } = req.body;
+
+    if (!raw_text || typeof raw_text !== "string" || !raw_text.trim()) {
+      return res.status(400).json({ success: false, message: "raw_text is required and cannot be empty" });
+    }
+
+    const { parsed, format_detected } = parseRawText(raw_text);
+
+    // Confidence scoring
+    const missingFields = [];
+    if (!parsed.vendor_name) missingFields.push("vendor_name");
+    
+    // Requirements state amount must be > 0 and date not future
+    const today = new Date().toISOString().split("T")[0];
+    if (parsed.amount === undefined || parsed.amount <= 0) missingFields.push("amount");
+    if (!parsed.date || parsed.date > today) missingFields.push("date");
+
+    const totalRequired = 3; // vendor, amount, date
+    const foundRequired = totalRequired - missingFields.length;
+    
+    let confidence = 0.5;
+    if (foundRequired === 3) confidence = 0.9;
+    else if (foundRequired === 2) confidence = 0.75;
+    else confidence = 0.5;
+
+    // Optional category handling (Not strictly required for confidence calculation as per prompt)
+    if (!parsed.category) {
+       parsed.category = "Other";
+    }
+
+    if (foundRequired === 0) {
+      return res.status(422).json({
+        success: false,
+        error: "Could not parse text",
+        examples: [
+          "GCP $2500 04/15/2024 IT",
+          "Vendor: GCP | Amount: 2500 | Date: 04/15/2024"
+        ]
+      });
+    }
+
+    if (confidence === 0.9) {
+      return res.status(200).json({
+        success: true,
+        parsed,
+        format_detected,
+        confidence,
+        missing_fields: missingFields
+      });
+    } else {
+      let feedback = `Could not detect ${missingFields.join(" and ")}. `;
+      if (missingFields.includes("date")) feedback += "Try adding format MM/DD/YYYY";
+      else if (missingFields.includes("amount")) feedback += "Try adding a currency symbol like $";
+      
+      return res.status(200).json({
+        success: true,
+        parsed,
+        confidence,
+        missing_fields: missingFields,
+        feedback: feedback.trim()
+      });
+    }
+
+  } catch (error) {
+    next(error);
+  }
+};
+
