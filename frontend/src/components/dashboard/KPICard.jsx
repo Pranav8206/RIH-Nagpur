@@ -36,11 +36,11 @@ export default function KPICard({
         )}
       </div>
 
-      <div className="flex-grow"></div>
+      <div className="grow"></div>
 
-      <div className="h-12 w-full mt-2">
+      <div className="h-12 min-h-12 w-full min-w-0 mt-2">
         {sparklineData && sparklineData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={40}>
             <LineChart data={sparklineData}>
               <Line 
                 type="monotone" 
