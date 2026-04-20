@@ -265,7 +265,7 @@ export const exportRecommendation = async (req, res) => {
 
             const structuredEmail = {
                 subject: subjectLine,
-                body: `To Whom It May Concern,\n\n${bodyContent}\n\nEstimated discrepancy: $${recoveryAmt}\n\nAction required: ${actionSteps}\n\nBest Regards,\nBilling Team`,
+                body: `To Whom It May Concern,\n\n${bodyContent}\n\nEstimated discrepancy:  ₹${recoveryAmt}\n\nAction required: ${actionSteps}\n\nBest Regards,\nBilling Team`,
                 to: `billing@${vendorName.toLowerCase().replace(/\s/g, '')}.com`,
                 cc: "internal-finance@company.com"
             };
@@ -284,7 +284,7 @@ Date Triggered: ${anomaly?.detected_at ? new Date(anomaly.detected_at).toDateStr
 
 DISCREPANCY OVERVIEW
 -------------------------------------------
-Calculated Discrepancy Amount: $${recoveryAmt}
+Calculated Discrepancy Amount:  ₹${recoveryAmt}
 Issue Type: ${classification?.leakage_type || "Unknown"}
 Root Cause Analysis: ${classification?.root_cause || "Pending"}
 

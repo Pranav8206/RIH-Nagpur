@@ -1,4 +1,5 @@
 import express from "express";
+import { protect } from "../middleware/auth.middleware.js";
 import {
   getMetrics,
   getTimeline,
@@ -16,6 +17,8 @@ const router = express.Router();
  * Endpoints
  * Ensure this route is mounted safely nested securely below standard JWT express extraction setups!
  */
+
+router.use(protect);
 
 router.get("/metrics", getMetrics);
 router.get("/timeline", getTimeline);

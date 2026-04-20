@@ -5,6 +5,8 @@ import { AuditLog } from "../models/auditLog.model.js";
 import { readAndParseCSV, validateRow } from "../utils/csvParser.js";
 import { parseRawText } from "../utils/textParser.js";
 
+const isObjectIdString = (value) => typeof value === "string" && mongoose.Types.ObjectId.isValid(value);
+
 export const importCSV = async (req, res, next) => {
   try {
     if (!req.file) {
@@ -31,6 +33,7 @@ export const importCSV = async (req, res, next) => {
 
     let validRows = [];
     const errors = [];
+    let validationErrorsCount = 0;
     const userId = req.user._id;
 
     // Validate each row
@@ -40,14 +43,20 @@ export const importCSV = async (req, res, next) => {
 
       const { isValid, errors: rowErrors, validatedData } = validateRow(row);
       if (!isValid) {
+        validationErrorsCount += 1;
         errors.push({
           row: index + 1, // 1-based index (header is 0 usually from outside perception, but parsedRows corresponds to data rows)
           errors: rowErrors,
         });
       } else {
+        const cleanedApproverId = isObjectIdString(validatedData.approver_id)
+          ? validatedData.approver_id
+          : undefined;
+
         // Add user_id and prepare for insert
         validRows.push({
           ...validatedData,
+          approver_id: cleanedApproverId,
           user_id: userId,
         });
       }
@@ -111,8 +120,11 @@ export const importCSV = async (req, res, next) => {
     let insertedTransactions = [];
 
     if (finalInsertBatch.length > 0) {
-      // Bulk Insert
-      insertedTransactions = await Transaction.insertMany(finalInsertBatch, { ordered: false });
+      // Bulk Insert using create to avoid silent no-op results from bulk validation paths.
+      const createdTransactions = await Transaction.create(finalInsertBatch);
+      insertedTransactions = Array.isArray(createdTransactions)
+        ? createdTransactions
+        : [createdTransactions];
       insertedCount = insertedTransactions.length;
 
       // Log import in AuditLog
@@ -129,13 +141,32 @@ export const importCSV = async (req, res, next) => {
     // Unlink the temporary file
     fs.unlinkSync(filePath);
 
+    const summary = {
+      total: parsedRows.length,
+      created: insertedCount,
+      failed: validationErrorsCount,
+      skipped: csvDuplicatesSkipped + dbDuplicatesSkipped,
+      valid: validRows.length,
+    };
+
+    let message = "Import completed successfully.";
+    if (insertedCount === 0 && summary.skipped > 0) {
+      message = "No new rows inserted. All valid rows were skipped as duplicates.";
+    } else if (insertedCount === 0 && summary.failed > 0) {
+      message = "No rows inserted because validation failed.";
+    } else if (insertedCount === 0) {
+      message = "No rows inserted. Check header mappings and required fields (vendor_name, amount, date).";
+    }
+
     res.status(200).json({
       success: true,
-      summary: {
-        total: parsedRows.length,
-        created: insertedCount,
-        failed: errors.length - (csvDuplicatesSkipped + dbDuplicatesSkipped) > 0 ? errors.length : 0, 
-        skipped: csvDuplicatesSkipped + dbDuplicatesSkipped,
+      message,
+      summary,
+      diagnostics: {
+        csv_duplicates: csvDuplicatesSkipped,
+        db_duplicates: dbDuplicatesSkipped,
+        queued_for_insert: finalInsertBatch.length,
+        existing_in_db: existingTransactions.length,
       },
       transactions: insertedTransactions,
       errors: errors,

@@ -16,7 +16,7 @@ export default function DepartmentChart({ data = [], isLoading }) {
         );
     }
 
-    const formatCurrency = (val) => `$${(val / 1000).toFixed(1)}k`;
+    const formatCurrency = (val) => ` ₹${(val / 1000).toFixed(1)}k`;
 
     return (
         <div className="bg-surface p-6 rounded-xl border border-border-light shadow-sm h-100 min-h-100 min-w-0 flex flex-col overflow-hidden">
@@ -28,7 +28,7 @@ export default function DepartmentChart({ data = [], isLoading }) {
                   <XAxis type="number" tickFormatter={formatCurrency} stroke="#9CA3AF" tick={{ fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis dataKey="department" type="category" width={90} tick={{ fontSize: 13, fill: '#374151', fontWeight: 500 }} axisLine={false} tickLine={false} />
                   <Tooltip 
-                     formatter={(value, name) => [`$${value.toLocaleString()}`, name.replace('_', ' ')]}
+                     formatter={(value, name) => [` ₹${value.toLocaleString()}`, name.replace('_', ' ')]}
                      contentStyle={{ borderRadius: '12px', border: '1px solid #f3f4f6', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
                      cursor={{ fill: '#f8fafc' }}
                   />

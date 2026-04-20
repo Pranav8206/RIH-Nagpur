@@ -18,6 +18,7 @@ export default function PasteParseComponent({ onSuccess }) {
     amount: "",
     date: "",
     category: "Other",
+    invoice_number: "",
   });
   
   const [missingFields, setMissingFields] = useState([]);
@@ -59,6 +60,7 @@ export default function PasteParseComponent({ onSuccess }) {
         amount: data.parsed?.amount || "",
         date: data.parsed?.date || "",
         category: data.parsed?.category || "Other",
+        invoice_number: data.parsed?.invoice_number || "",
       });
 
     } catch (err) {
@@ -80,7 +82,7 @@ export default function PasteParseComponent({ onSuccess }) {
 
   const resetForm = () => {
     setInputText("");
-    setParsedData({ vendor_name: "", amount: "", date: "", category: "Other" });
+    setParsedData({ vendor_name: "", amount: "", date: "", category: "Other", invoice_number: "" });
     setStep("idle");
     setMissingFields([]);
     setApiError("");
@@ -237,6 +239,17 @@ export default function PasteParseComponent({ onSuccess }) {
                 <option value="Other">Other</option>
               </select>
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Invoice Number</label>
+              <input
+                type="text"
+                value={parsedData.invoice_number}
+                onChange={(e) => handleFieldEdit("invoice_number", e.target.value)}
+                placeholder="e.g. INV-903502"
+                className="w-full p-2 border border-gray-300 rounded-md outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
           {apiError && (
@@ -277,7 +290,7 @@ export default function PasteParseComponent({ onSuccess }) {
               <h4 className="text-sm font-medium text-gray-700 mb-2">Example Formats:</h4>
               <ul className="text-sm text-gray-600 space-y-2 bg-gray-50 border p-3 rounded-md italic font-mono">
                  <li>"GCP $2500 04/15/2024"</li>
-                 <li>"Vendor: GCP | Amount: 2500 | Date: 04/15/2024"</li>
+                  <li>"Vendor: GCP | Invoice: INV-903502 | Amount: 2500 | Date: 04/15/2024"</li>
               </ul>
            </div>
 
@@ -314,6 +327,10 @@ export default function PasteParseComponent({ onSuccess }) {
                  <div className="flex justify-between">
                    <span className="text-gray-500">Date</span>
                    <span className="font-semibold text-gray-900">{createdData.date}</span>
+                 </div>
+                 <div className="flex justify-between border-t pt-2">
+                   <span className="text-gray-500">Invoice</span>
+                   <span className="font-semibold text-gray-900 truncate max-w-37.5">{createdData.invoice_number || "N/A"}</span>
                  </div>
              </div>
 

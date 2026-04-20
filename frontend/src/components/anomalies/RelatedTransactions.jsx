@@ -18,7 +18,7 @@ export default function RelatedTransactions({ vendor, currentTrxId }) {
        enabled: !!vendor
     });
 
-    const formatCurrency = (amt) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amt || 0);
+    const formatCurrency = (amt) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'INR' }).format(amt || 0);
 
     return (
         <div className="bg-surface rounded-xl border border-border-light shadow-sm overflow-hidden flex flex-col sticky top-24">
