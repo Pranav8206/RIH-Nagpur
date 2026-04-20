@@ -7,20 +7,20 @@ export const protect = async (req, res, next) => {
     const token = req.headers.authorization?.replace("Bearer ", "");
 
     if (!token) {
-      return res.status(401).json({ message: "Not authorized" });
+      return res.status(401).json({ success: false, message: "Not authorized" });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const user = await User.findById(decoded._id).select("-password");
+    const userId = decoded._id || decoded.id;
+    const user = await User.findById(userId).select("-password");
 
     if (!user) {
-      return res.status(401).json({ message: "User not found" });
+      return res.status(401).json({ success: false, message: "User not found" });
     }
 
     req.user = user;
     next();
   } catch (error) {
-    return res.status(401).json({ message: "Invalid token" });
+    return res.status(401).json({ success: false, message: "Invalid token" });
   }
 };

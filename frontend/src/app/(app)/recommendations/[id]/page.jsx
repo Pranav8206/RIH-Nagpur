@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { ChevronLeft, ShieldAlert, CheckCircle, Mail, FileText } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import RecommendationDetailCard from '@/components/recommendations/RecommendationDetailCard';
 import EmailPreview from '@/components/recommendations/EmailPreview';
@@ -20,14 +21,14 @@ export default function RecommendationDetailView() {
     const { data, isLoading, isError } = useQuery({
        queryKey: ['recommendation', id],
        queryFn: async () => {
-           const res = await axios.get(`http://localhost:5000/api/recommendations/${id}`);
+           const res = await axios.get(`/recommendations/${id}`);
            return res.data;
        }
     });
 
     if (isLoading) return <div className="min-h-screen bg-[#F8FAFC] p-8 max-w-5xl mx-auto pt-32"><LoadingSkeleton type="card" className="h-64" /></div>;
 
-    if (isError || !data?.data) {
+    if (isError || !data?.data?.id) {
         return (
           <div className="min-h-[calc(100vh-64px)] bg-[#F8FAFC] flex flex-col items-center pt-32 animate-in fade-in">
              <div className="w-20 h-20 bg-red-50 border border-red-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
@@ -39,32 +40,60 @@ export default function RecommendationDetailView() {
         );
     }
 
-    let rec = null;
-    let templateContent = null;
-    let classificationData = null;
+    const recommendationData = data.data;
+    const rec = recommendationData
+        ? {
+              _id: recommendationData.id,
+              recommendation_type: recommendationData.recommendation_type,
+              action_description: recommendationData.action_description,
+              template_email: recommendationData.template_email,
+              template_document: recommendationData.template_document,
+              priority: recommendationData.priority,
+              estimated_recovery: recommendationData.estimated_recovery,
+              status: recommendationData.status,
+              created_at: recommendationData.created_at,
+          }
+        : null;
 
-    if (data.data.format === 'email' || data.data.body) {
-        rec = data.data; 
-        templateContent = rec.body || rec.template_content;
-    } else if (data.data.recommendation) {
-        rec = data.data.recommendation;
-        templateContent = rec?.template_content;
-        classificationData = data.data.classification;
-    } else {
-        rec = data.data;
-        templateContent = rec?.template_content;
-    }
+    const emailTemplate = rec?.template_email || "";
+    const emailLines = emailTemplate.split('\n');
+    const hasSubjectLine = emailLines[0]?.toLowerCase().startsWith('subject:');
+    const emailSubject = hasSubjectLine
+        ? emailLines[0].replace(/^subject:\s*/i, '').trim()
+        : 'Billing discrepancy notice';
+    const emailBody = hasSubjectLine ? emailLines.slice(1).join('\n').trim() : emailTemplate;
+    const pdfContent =
+        rec?.template_document ||
+        rec?.action_description ||
+        "Recommendation details will appear here once a template is available.";
 
     const handleActionPush = async (statusVector) => {
          setActionSync(true);
          try {
-             // Simulating the execute or reject map limits natively securely hooks
-             setTimeout(()=> {
-                 alert(`Successfully tracked Execution Output Node ${statusVector}! Backend nested loops updated correctly locally.`);
-                 setActionSync(false);
-             }, 800);
+             if (statusVector === 'Rejected') {
+                 await axios.patch(`/recommendations/${id}/reject`, {
+                     reason: 'Rejected from the recommendation detail view.',
+                 });
+             } else {
+                 await axios.patch(`/recommendations/${id}/execute`, {});
+             }
+
+             await Promise.all([
+                 queryClient.invalidateQueries({ queryKey: ['recommendation', id] }),
+                 queryClient.invalidateQueries({ queryKey: ['recommendations'] }),
+             ]);
+
+             toast.success(
+                 statusVector === 'Rejected'
+                     ? 'Recommendation rejected.'
+                     : 'Recommendation executed.',
+             );
          } catch(e) {
-             alert('Sequence Ext API Ext Error hooks bounds limit strings error outputs limits drops');
+             const message =
+                 e?.response?.data?.message ||
+                 'Unable to update the recommendation right now.';
+             toast.error(message);
+         } finally {
              setActionSync(false);
          }
     };
@@ -114,9 +143,9 @@ export default function RecommendationDetailView() {
 
                       <div className="p-4 bg-gray-50/30 rounded-b-lg">
                           {templateType === 'email' ? (
-                             <EmailPreview body={templateContent} />
+                             <EmailPreview body={emailBody} subject={emailSubject} />
                           ) : (
-                             <PdfPreview content={templateContent} recommendation={rec} />
+                             <PdfPreview content={pdfContent} recommendation={rec} />
                           )}
                       </div>
                  </div>

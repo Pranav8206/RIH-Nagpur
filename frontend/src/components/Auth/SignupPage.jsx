@@ -110,12 +110,7 @@ export default function SignUpPage() {
       return;
     }
 
-    if (!isCaptchaConfigured) {
-      toast.error("reCAPTCHA is not configured.");
-      return;
-    }
-
-    if (!captchaToken) {
+    if (isCaptchaConfigured && !captchaToken) {
       toast.error("Please complete reCAPTCHA.");
       return;
     }
@@ -127,7 +122,7 @@ export default function SignUpPage() {
         fullName: fullName.trim(),
         email: email.trim(),
         password,
-        captchaToken,
+        ...(isCaptchaConfigured && captchaToken ? { captchaToken } : {}),
       });
 
       if (!response?.data?.success) {
@@ -239,7 +234,7 @@ export default function SignUpPage() {
               className="mt-2 text-sm text-text-secondary"
               variants={sectionVariants}
             >
-              Join to use and explore features.
+              Create an account to start tracking expense leakage.
             </motion.p>
 
             <motion.form
@@ -357,7 +352,7 @@ export default function SignUpPage() {
                 ) : (
                   <div className="space-y-1">
                     <p className="text-sm text-amber-700">
-                      reCAPTCHA is not configured.
+                      reCAPTCHA is not configured. Sign up will continue without it in local development.
                     </p>
                     <p className="text-xs text-text-tertiary">
                       Add NEXT_PUBLIC_RECAPTCHA_SITE_KEY in your frontend .env.
@@ -394,7 +389,7 @@ export default function SignUpPage() {
 
               <button
                 type="submit"
-                disabled={loading || !isCaptchaConfigured}
+                disabled={loading || (isCaptchaConfigured && !captchaToken)}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-accent-dark disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading && <Loader size={16} className="animate-spin" />}

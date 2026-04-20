@@ -1,5 +1,3 @@
-import { createClient } from "redis";
-
 let redisClient;
 let isRedisConnected = false;
 
@@ -14,6 +12,7 @@ export const initRedis = async () => {
             return;
         }
 
+        const { createClient } = await import("redis");
         redisClient = createClient({ url: process.env.REDIS_URI });
 
         redisClient.on('error', (err) => {

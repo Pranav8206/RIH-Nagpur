@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { RefreshCcw, AlertTriangle } from 'lucide-react';
 
@@ -20,22 +20,15 @@ export default function DashboardPage() {
    const [error, setError] = useState(null);
    const [processing, setProcessing] = useState(false);
 
-   // Configure JWT abstraction natively mimicking enterprise states
-   const axiosConfig = {
-      // headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } // Enable upon Auth tie-in
-   };
-
-   // Standard payload fetcher aggregating endpoints concurrently
-   const fetchDashboardData = async () => {
+   const fetchDashboardData = useCallback(async () => {
       setLoading(true);
       setError(null);
       try {
-         // Resolve mappings bypassing waterfall blocking delays 
          const [metricsRes, timelineRes, topRes, deptRes] = await Promise.all([
-             axios.get("http://localhost:5000/api/dashboard/metrics", axiosConfig).catch(() => ({ data: { data: {} } })),
-             axios.get("http://localhost:5000/api/dashboard/timeline?period=month", axiosConfig).catch(() => ({ data: { data: { dates: [] } } })),
-             axios.get("http://localhost:5000/api/dashboard/top-anomalies?limit=5", axiosConfig).catch(() => ({ data: { data: [] } })),
-             axios.get("http://localhost:5000/api/dashboard/by-department", axiosConfig).catch(() => ({ data: { data: [] } }))
+             axios.get("/dashboard/metrics"),
+             axios.get("/dashboard/timeline?period=month"),
+             axios.get("/dashboard/top-anomalies?limit=5"),
+             axios.get("/dashboard/by-department")
          ]);
 
          setMetrics(metricsRes.data.data);
@@ -58,20 +51,24 @@ export default function DashboardPage() {
 
       } catch (err) {
          console.error("Failed fetching dashboard data", err);
+         setMetrics(null);
+         setTimeline([]);
+         setTopAnomalies([]);
+         setDepartmentData([]);
          setError("Connection to Analytics Core Refused. Ensure backend services are booting correctly locally.");
       } finally {
          setLoading(false);
       }
-   };
+   }, []);
 
    useEffect(() => {
        fetchDashboardData();
-   }, []);
+   }, [fetchDashboardData]);
 
    const handleRunDetection = async () => {
       setProcessing(true);
       try {
-         await axios.post("http://localhost:5000/api/anomalies/detect", {}, axiosConfig);
+         await axios.post("/anomalies/detect");
          await fetchDashboardData(); 
       } catch (err) {
          alert("Detection ML engine failed to synchronize.");
@@ -83,7 +80,7 @@ export default function DashboardPage() {
    const handleRunClassification = async () => {
       setProcessing(true);
       try {
-         await axios.post("http://localhost:5000/api/classifications/classify", {}, axiosConfig);
+         await axios.post("/classifications/classify");
          await fetchDashboardData();
       } catch (err) {
          alert("Classification taxonomy matrix failed.");
@@ -147,7 +144,7 @@ export default function DashboardPage() {
                  />
                  <KPICard 
                     title="Extracted Recovery Pool" 
-                    value={`$${((metrics?.total_recovered + (metrics?.recovery_potential || 0)) || 0).toLocaleString()}`} 
+                    value={`$${(metrics?.total_recovered || 0).toLocaleString()}`} 
                     isLoading={loading} 
                     hasAction={true} 
                     onActionClick={() => alert("Bulk execution pipeline triggered!")}

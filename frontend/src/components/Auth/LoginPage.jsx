@@ -136,7 +136,7 @@ export default function LoginPage() {
               Welcome Back
             </h1>
             <p className="mt-4 max-w-md text-sm text-white/85">
-              Sign in to manage your bookings and equipment.
+              Sign in to review anomalies, classifications, and recovery actions.
             </p>
           </div>
         </motion.aside>
@@ -162,7 +162,7 @@ export default function LoginPage() {
               className="mt-2 text-sm text-text-secondary"
               variants={sectionVariants}
             >
-              Sign in to manage your bookings and equipment.
+              Sign in to continue reviewing expense leakage signals.
             </motion.p>
 
             <motion.form
@@ -170,12 +170,7 @@ export default function LoginPage() {
               variants={sectionVariants}
               onSubmit={async (e) => {
                 e.preventDefault();
-                if (!isCaptchaConfigured) {
-                  toast.error("reCAPTCHA is not configured.");
-                  return;
-                }
-
-                if (!captchaToken) {
+                if (isCaptchaConfigured && !captchaToken) {
                   toast.error("Please complete reCAPTCHA.");
                   return;
                 }
@@ -189,7 +184,9 @@ export default function LoginPage() {
                     {
                       email,
                       password,
-                      captchaToken,
+                      ...(isCaptchaConfigured && captchaToken
+                        ? { captchaToken }
+                        : {}),
                     },
                   );
 
@@ -284,7 +281,7 @@ export default function LoginPage() {
                 ) : (
                   <div className="space-y-1">
                     <p className="text-sm text-amber-700">
-                      reCAPTCHA is not configured.
+                      reCAPTCHA is not configured. Login will continue without it in local development.
                     </p>
                     <p className="text-xs text-text-tertiary">
                       Add NEXT_PUBLIC_RECAPTCHA_SITE_KEY in your frontend .env.
@@ -301,7 +298,7 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={loading || !isCaptchaConfigured}
+                disabled={loading || (isCaptchaConfigured && !captchaToken)}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary-accent px-5 py-3 text-sm font-semibold text-white transition hover:bg-primary-accent-dark disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {loading && <Loader size={16} className="animate-spin" />}

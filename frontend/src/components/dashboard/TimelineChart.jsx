@@ -3,13 +3,15 @@ import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Calendar } from 'lucide-react';
 
+const skeletonHeights = [34, 52, 61, 45, 72, 58, 83, 49, 67, 55, 76, 62];
+
 export default function TimelineChart({ data = [], isLoading }) {
    if (isLoading) {
         return (
           <div className="bg-surface p-5 rounded-xl border border-border-light shadow-sm h-100 flex items-center justify-center">
              <div className="animate-pulse w-full px-8 flex items-end space-x-2 h-48">
-               {[...Array(12)].map((_, i) => (
-                 <div key={i} className="flex-1 bg-surface-hover rounded-t border border-border-light border-b-0" style={{ height: `${Math.max(20, Math.random() * 100)}%` }}></div>
+               {skeletonHeights.map((height, i) => (
+                 <div key={i} className="flex-1 bg-surface-hover rounded-t border border-border-light border-b-0" style={{ height: `${height}%` }}></div>
                ))}
              </div>
           </div>

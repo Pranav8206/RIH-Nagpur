@@ -4,15 +4,21 @@ import axios from 'axios';
 import { useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck, ArrowRight, Zap } from 'lucide-react';
 
-export default function RecommendationPanel({ recommendation, classificationId, currentClassification }) {
+export default function RecommendationPanel({ recommendation, anomalyId, classificationId, currentClassification }) {
     const queryClient = useQueryClient();
     const [loading, setLoading] = useState(false);
+    const actionSteps =
+        recommendation?.action_steps?.length
+            ? recommendation.action_steps
+            : recommendation?.action_description
+              ? [recommendation.action_description]
+              : [];
 
     const handleGenerate = async () => {
         setLoading(true);
         try {
-            await axios.post(`http://localhost:5000/api/recommendations/generate`);
-            await queryClient.invalidateQueries(['anomaly']); 
+            await axios.post('/recommendations/generate');
+            await queryClient.invalidateQueries({ queryKey: ['anomaly', anomalyId] }); 
         } catch(e) {
             alert('Recommendation Logic API Error boundaries.');
         } finally {
@@ -57,7 +63,7 @@ export default function RecommendationPanel({ recommendation, classificationId, 
                                <Zap className="w-3 h-3 mr-1" /> Actionable Limits Map
                            </div>
                            <ul className="space-y-2">
-                               {recommendation.action_steps?.map((step, idx) => (
+                               {actionSteps.map((step, idx) => (
                                   <li key={idx} className="flex items-start text-sm text-text-secondary bg-surface-hover p-2.5 rounded border border-border-light shadow-sm">
                                       <div className="w-5 h-5 rounded bg-primary-accent-light/50 text-primary-accent-dark flex items-center justify-center text-[10px] font-bold border border-primary-accent-light mr-3 flex-shrink-0 mt-0.5 shadow-sm">
                                          {idx + 1}
@@ -65,7 +71,7 @@ export default function RecommendationPanel({ recommendation, classificationId, 
                                       <span className="leading-snug">{step}</span>
                                   </li>
                                ))}
-                               {!recommendation.action_steps?.length && (
+                               {!actionSteps.length && (
                                   <li className="text-sm text-text-tertiary italic">No explicit steps parsed.</li>
                                )}
                            </ul>

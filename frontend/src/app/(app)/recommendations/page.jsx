@@ -17,7 +17,7 @@ const fetchRecommendations = async ({ queryKey }) => {
    if (filters.status) params.append('status', filters.status);
    if (filters.priority) params.append('priority', filters.priority);
    
-   const { data } = await axios.get(`http://localhost:5000/api/recommendations?${params.toString()}`);
+   const { data } = await axios.get(`/recommendations?${params.toString()}`);
    return data;
 };
 
@@ -56,7 +56,7 @@ export default function RecommendationsListPage() {
                         Execute Active Nodes Layouts
                     </button>
                     <button 
-                      onClick={() => queryClient.invalidateQueries(['recommendations'])}
+                      onClick={() => queryClient.invalidateQueries({ queryKey: ['recommendations'] })}
                       className="flex items-center text-sm font-bold text-text-secondary bg-surface border border-border-light px-4 py-2 rounded-lg shadow-sm hover:bg-surface-hover transition"
                       disabled={isFetching}
                     >

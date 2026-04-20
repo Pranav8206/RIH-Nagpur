@@ -7,17 +7,17 @@ import toast from "react-hot-toast";
 
 export default function ProtectedRoute({ children }) {
   const router = useRouter();
-  const { token, loading } = useAppContext();
+  const { authReady, token } = useAppContext();
   const isAuthenticated = Boolean(token);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (authReady && !isAuthenticated) {
       toast.error("Login to proceed");
-      router.push("/login");
+      router.replace("/login");
     }
-  }, [isAuthenticated, loading, router]);
+  }, [authReady, isAuthenticated, router]);
 
-  if (loading) {
+  if (!authReady) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="flex flex-col items-center gap-4">

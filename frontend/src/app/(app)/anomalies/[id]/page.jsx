@@ -19,7 +19,7 @@ export default function AnomalyDetailView() {
     const { data, isLoading, isError } = useQuery({
        queryKey: ['anomaly', id],
        queryFn: async () => {
-           const res = await axios.get(`http://localhost:5000/api/anomalies/${id}`);
+           const res = await axios.get(`/anomalies/${id}`);
            return res.data;
        }
     });
@@ -87,7 +87,7 @@ export default function AnomalyDetailView() {
                        
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            <ClassificationPanel classification={classifications?.[0]} anomalyId={id} />
-                           <RecommendationPanel recommendation={recommendations?.[0]} classificationId={classifications?.[0]?._id} currentClassification={classifications?.[0]} />
+                           <RecommendationPanel recommendation={recommendations?.[0]} anomalyId={id} classificationId={classifications?.[0]?._id} currentClassification={classifications?.[0]} />
                        </div>
 
                        <AuditTrail entityId={id} anomalyId={id} classificationId={classifications?.[0]?._id} />

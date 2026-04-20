@@ -8,6 +8,12 @@ export default function RecommendationDetailCard({ recommendation }) {
     if (!recommendation) return null;
 
     const formatCurrency = (amt) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amt || 0);
+    const actionSteps =
+        recommendation.action_steps?.length
+            ? recommendation.action_steps
+            : recommendation.action_description
+              ? [recommendation.action_description]
+              : [];
 
     return (
         <div className="bg-surface rounded-xl border border-border-light shadow-sm overflow-hidden">
@@ -30,7 +36,7 @@ export default function RecommendationDetailCard({ recommendation }) {
                                <Terminal className="w-3.5 h-3.5 mr-1" /> Core Logic Instruction Sequence
                             </div>
                             <div className="text-lg font-bold tracking-tight text-text-primary leading-snug">{recommendation.action_description || 'Auto System Recovery Generator Block Protocol Map Format'}</div>
-                            <div className="text-xs font-bold text-primary-accent mt-2 uppercase tracking-widest bg-primary-accent-light/30 border border-primary-accent-light px-3 py-1.5 rounded inline-block shadow-sm">{recommendation.action_type || 'General System Flag Output Ext Layout Mode Array Mapping'}</div>
+                            <div className="text-xs font-bold text-primary-accent mt-2 uppercase tracking-widest bg-primary-accent-light/30 border border-primary-accent-light px-3 py-1.5 rounded inline-block shadow-sm">{recommendation.recommendation_type || recommendation.action_template || 'General recovery action'}</div>
                         </div>
                     </div>
 
@@ -41,7 +47,7 @@ export default function RecommendationDetailCard({ recommendation }) {
                             </div>
                             
                             <ul className="space-y-2.5">
-                               {recommendation.action_steps?.map((step, idx) => (
+                               {actionSteps.map((step, idx) => (
                                   <li key={idx} className="flex items-start text-sm text-text-secondary bg-surface-hover p-3 rounded-lg border border-border-light shadow-sm font-medium tracking-wide">
                                       <div className="w-5 h-5 rounded bg-primary-accent-light/50 text-primary-accent-dark flex items-center justify-center text-[10px] font-bold border border-primary-accent-light mr-3 flex-shrink-0 mt-0.5 shadow-sm">
                                          {idx + 1}
@@ -49,7 +55,7 @@ export default function RecommendationDetailCard({ recommendation }) {
                                       <span className="leading-snug">{step}</span>
                                   </li>
                                ))}
-                               {!recommendation.action_steps?.length && (
+                               {!actionSteps.length && (
                                   <li className="text-sm text-text-tertiary italic">No exact sequence extracted arrays found natively internally via system matrix layout output engine structures properly globally.</li>
                                )}
                            </ul>

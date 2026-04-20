@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import AnomalyTable from '@/components/anomalies/AnomalyTable';
 import AnomalyFilters from '@/components/anomalies/AnomalyFilters';
@@ -17,7 +17,7 @@ const fetchAnomalies = async ({ queryKey }) => {
    if (filters.status) params.append('status', filters.status);
    if (filters.severity) params.append('severity', filters.severity);
    
-   const { data } = await axios.get(`http://localhost:5000/api/anomalies?${params.toString()}`);
+   const { data } = await axios.get(`/anomalies?${params.toString()}`);
    return data;
 };
 
@@ -43,10 +43,10 @@ export default function AnomaliesListPage() {
       if(selectedIds.length === 0) return;
       try {
           const promises = selectedIds.map(id => 
-              axios.patch(`http://localhost:5000/api/anomalies/${id}`, { status: actionStatus })
+              axios.patch(`/anomalies/${id}`, { status: actionStatus })
           );
           await Promise.all(promises);
-          queryClient.invalidateQueries(['anomalies']);
+          queryClient.invalidateQueries({ queryKey: ['anomalies'] });
           setSelectedIds([]);
       } catch(err) {
           alert("Failed to process bulk edit"); 
@@ -65,7 +65,7 @@ export default function AnomaliesListPage() {
                    <p className="text-sm text-text-secondary mt-1">Review flagged algorithmic multi-layer transactions instantly.</p>
                 </div>
                 <button 
-                  onClick={() => queryClient.invalidateQueries(['anomalies'])}
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['anomalies'] })}
                   className="flex items-center text-sm font-medium text-text-secondary bg-surface border border-border-light px-4 py-2 rounded-lg shadow-sm hover:bg-surface-hover transition"
                   disabled={isFetching}
                 >

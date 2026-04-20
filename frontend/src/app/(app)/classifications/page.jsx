@@ -17,7 +17,7 @@ const fetchClassifications = async ({ queryKey }) => {
    if (filters.leakage_type) params.append('leakage_type', filters.leakage_type);
    if (filters.impact_level) params.append('impact_level', filters.impact_level);
    
-   const { data } = await axios.get(`http://localhost:5000/api/classifications?${params.toString()}`);
+   const { data } = await axios.get(`/classifications?${params.toString()}`);
    return data;
 };
 
@@ -56,7 +56,7 @@ export default function ClassificationsListPage() {
                         Approve Matrix Bounds
                     </button>
                     <button 
-                      onClick={() => queryClient.invalidateQueries(['classifications'])}
+                      onClick={() => queryClient.invalidateQueries({ queryKey: ['classifications'] })}
                       className="flex items-center text-sm font-bold text-text-secondary bg-surface border border-border-light px-4 py-2 rounded-lg shadow-sm hover:bg-surface-hover transition"
                       disabled={isFetching}
                     >

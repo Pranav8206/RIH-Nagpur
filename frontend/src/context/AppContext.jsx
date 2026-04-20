@@ -45,6 +45,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     let isMounted = true;
+    let readyTimer;
 
     const bootstrapAuth = async () => {
       const startTime = Date.now();
@@ -70,7 +71,7 @@ export const AppProvider = ({ children }) => {
       const minimumDelay = 900;
       const waitMs = Math.max(0, minimumDelay - elapsed);
 
-      setTimeout(() => {
+      readyTimer = setTimeout(() => {
         if (isMounted) {
           setAuthReady(true);
         }
@@ -82,6 +83,9 @@ export const AppProvider = ({ children }) => {
 
     return () => {
       isMounted = false;
+      if (readyTimer) {
+        clearTimeout(readyTimer);
+      }
     };
   }, [token]);
 

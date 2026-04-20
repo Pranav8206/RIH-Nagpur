@@ -11,8 +11,8 @@ export default function ClassificationPanel({ classification, anomalyId }) {
     const handleClassify = async () => {
         setLoading(true);
         try {
-            await axios.post(`http://localhost:5000/api/classifications/classify`); 
-            await queryClient.invalidateQueries(['anomaly', anomalyId]);
+            await axios.post('/classifications/classify'); 
+            await queryClient.invalidateQueries({ queryKey: ['anomaly', anomalyId] });
         } catch(e) {
             alert('Classification Trigger Failed');
         } finally {

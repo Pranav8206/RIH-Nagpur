@@ -1,9 +1,10 @@
 "use client";
 import React, { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { ChevronLeft, ShieldAlert, Zap, Network } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 import ClassificationDetailCard from '@/components/classifications/ClassificationDetailCard';
 import KeyIndicators from '@/components/classifications/KeyIndicators';
@@ -12,13 +13,13 @@ import LoadingSkeleton from '@/components/shared/LoadingSkeleton';
 export default function ClassificationDetailView() {
     const { id } = useParams();
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [actionSync, setActionSync] = useState(false);
 
-    // Bypassing blocking sequential requests completely caching natively mapping queries!
     const { data, isLoading, isError } = useQuery({
        queryKey: ['classification', id],
        queryFn: async () => {
-           const res = await axios.get(`http://localhost:5000/api/classifications/${id}`);
+           const res = await axios.get(`/classifications/${id}`);
            return res.data;
        }
     });
@@ -31,7 +32,7 @@ export default function ClassificationDetailView() {
         );
     }
 
-    if (isError || !data?.data) {
+    if (isError || !data?.data?.classification) {
         return (
           <div className="min-h-[calc(100vh-64px)] bg-[#F8FAFC] flex flex-col items-center pt-32 animate-in fade-in">
              <div className="w-20 h-20 bg-red-50 border border-red-100 rounded-full flex items-center justify-center mb-6 shadow-sm">
@@ -44,15 +45,37 @@ export default function ClassificationDetailView() {
         );
     }
 
-    const classification = data.data;
+    const classificationData = data.data;
+    const classification = classificationData?.classification;
+    const recommendations = classificationData?.recommendations || [];
+    const latestRecommendation = recommendations[0] || null;
 
-    const handleMockGeneration = async () => {
+    const handleRecoveryAction = async () => {
+         if (latestRecommendation?._id) {
+             router.push(`/recommendations/${latestRecommendation._id}`);
+             return;
+         }
+
          setActionSync(true);
-         setTimeout(() => {
-             alert('Recommendation Workflow mapped properly dynamically via hooks!');
+         try {
+             await axios.post('/recommendations/generate');
+             await Promise.all([
+                 queryClient.invalidateQueries({ queryKey: ['classification', id] }),
+                 queryClient.invalidateQueries({ queryKey: ['recommendations'] }),
+             ]);
+             toast.success('Recovery recommendations generated.');
+         } catch (error) {
+             const message =
+                 error?.response?.data?.message ||
+                 'Unable to generate recovery recommendations right now.';
+             toast.error(message);
+         } finally {
              setActionSync(false);
-         }, 1000);
+         }
     };
+
+    const formatCurrency = (amt) =>
+         new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amt || 0);
 
     return (
        <div className="min-h-[calc(100vh-64px)] bg-[#FAFBFD] pb-24 font-sans text-slate-800">
@@ -73,9 +96,9 @@ export default function ClassificationDetailView() {
                    </div>
                    
                    <div className="flex items-center space-x-3">
-                       <button onClick={handleMockGeneration} disabled={actionSync} className="text-xs font-bold tracking-widest text-white bg-indigo-600 uppercase px-4 py-2 border border-indigo-700/50 rounded-lg hover:bg-indigo-700 transition flex items-center shadow-sm disabled:opacity-50">
+                       <button onClick={handleRecoveryAction} disabled={actionSync} className="text-xs font-bold tracking-widest text-white bg-indigo-600 uppercase px-4 py-2 border border-indigo-700/50 rounded-lg hover:bg-indigo-700 transition flex items-center shadow-sm disabled:opacity-50">
                            <Zap className="w-3.5 h-3.5 mr-2" />
-                           {actionSync ? 'Compiling Action...' : 'Compile Recovery'}
+                           {actionSync ? 'Working...' : latestRecommendation ? 'Open Recovery' : 'Generate Recovery'}
                        </button>
                    </div>
                 </div>
@@ -89,21 +112,46 @@ export default function ClassificationDetailView() {
                      
                      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col">
                           <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center">
-                             <Network className="w-4 h-4 mr-2 text-indigo-500" /> Actions Sandbox Limit
+                             <Network className="w-4 h-4 mr-2 text-indigo-500" /> Recovery Workflow
                           </h3>
-                          <div className="flex-1 flex flex-col space-y-4">
-                              <textarea 
-                                 className="w-full text-sm flex-1 bg-gray-50 border border-gray-200 rounded-lg p-4 resize-none outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-300 placeholder-gray-400 font-medium tracking-wide transition"
-                                 placeholder="Force internal overrides marking strings correctly locally..."
-                              ></textarea>
-                              <div className="flex items-center justify-end space-x-3 mt-auto pt-2">
-                                  <button className="text-xs font-bold tracking-widest uppercase px-4 py-2.5 bg-gray-50 text-slate-700 border border-gray-200 rounded-lg hover:bg-red-50 hover:text-red-700 hover:border-red-200 transition-colors shadow-sm">
-                                      Flag Override
-                                  </button>
-                                  <button className="text-xs font-bold px-4 py-2.5 bg-emerald-600 text-white border border-emerald-700/50 uppercase tracking-widest rounded-lg hover:bg-emerald-700 hover:shadow transition-all">
-                                      Verify Output
-                                  </button>
-                              </div>
+                          <div className="flex-1 flex flex-col gap-4">
+                              {latestRecommendation ? (
+                                  <>
+                                      <div className="rounded-xl border border-border-light bg-gray-50/60 p-4">
+                                          <p className="text-[10px] font-bold uppercase tracking-widest text-text-tertiary">
+                                              Current Recommendation
+                                          </p>
+                                          <p className="mt-2 text-sm font-semibold text-text-primary">
+                                              {latestRecommendation.action_description}
+                                          </p>
+                                          <p className="mt-3 text-sm text-text-secondary">
+                                              Status: <span className="font-semibold text-text-primary">{latestRecommendation.status}</span>
+                                          </p>
+                                          <p className="mt-1 text-sm text-text-secondary">
+                                              Estimated Recovery: <span className="font-semibold text-primary-accent">{formatCurrency(latestRecommendation.estimated_recovery)}</span>
+                                          </p>
+                                      </div>
+                                      <button
+                                          onClick={handleRecoveryAction}
+                                          className="text-xs font-bold px-4 py-2.5 bg-emerald-600 text-white border border-emerald-700/50 uppercase tracking-widest rounded-lg hover:bg-emerald-700 hover:shadow transition-all"
+                                      >
+                                          Open Recommendation
+                                      </button>
+                                  </>
+                              ) : (
+                                  <>
+                                      <p className="text-sm text-text-secondary leading-relaxed">
+                                          No recovery recommendation has been generated for this classification yet.
+                                      </p>
+                                      <button
+                                          onClick={handleRecoveryAction}
+                                          disabled={actionSync}
+                                          className="text-xs font-bold px-4 py-2.5 bg-emerald-600 text-white border border-emerald-700/50 uppercase tracking-widest rounded-lg hover:bg-emerald-700 hover:shadow transition-all disabled:opacity-50"
+                                      >
+                                          {actionSync ? 'Generating...' : 'Generate Recommendation'}
+                                      </button>
+                                  </>
+                              )}
                           </div>
                      </div>
                  </div>
