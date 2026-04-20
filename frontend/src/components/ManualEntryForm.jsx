@@ -82,19 +82,13 @@ export default function ManualEntryForm({ onSuccess }) {
     setSuccessMessage("");
 
     try {
-      const token = localStorage.getItem("token") || "";
       const payload = {
         ...formData,
         amount: parseFloat(formData.amount),
         // Send optional fields as null/undefined if empty, though strings are usually fine
       };
 
-      await axios.post("/api/transactions", payload, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await axios.post("/transactions", payload);
 
       setSuccessMessage("Transaction added successfully");
       if (onSuccess) onSuccess(1);

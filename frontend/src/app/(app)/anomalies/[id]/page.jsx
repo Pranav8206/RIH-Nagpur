@@ -19,7 +19,7 @@ export default function AnomalyDetailView() {
     const { data, isLoading, isError } = useQuery({
        queryKey: ['anomaly', id],
        queryFn: async () => {
-           const res = await axios.get(`http://localhost:5000/api/anomalies/${id}`);
+           const res = await axios.get(`/anomalies/${id}`);
            return res.data;
        }
     });

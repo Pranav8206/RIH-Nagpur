@@ -17,7 +17,7 @@ const fetchClassifications = async ({ queryKey }) => {
    if (filters.leakage_type) params.append('leakage_type', filters.leakage_type);
    if (filters.impact_level) params.append('impact_level', filters.impact_level);
    
-   const { data } = await axios.get(`http://localhost:5000/api/classifications?${params.toString()}`);
+   const { data } = await axios.get(`/classifications?${params.toString()}`);
    return data;
 };
 

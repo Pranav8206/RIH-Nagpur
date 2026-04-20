@@ -114,12 +114,9 @@ export default function CSVUploadComponent({ onSuccess }) {
     formData.append("transactions_file", file);
 
     try {
-      // NOTE: User must be authenticated, we're assuming token is stored in localStorage here, modify if via cookies or auth-context
-      const token = localStorage.getItem("token") || ""; 
-      const response = await axios.post("/api/import/csv", formData, {
+      const response = await axios.post("/import/csv", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -232,7 +229,7 @@ export default function CSVUploadComponent({ onSuccess }) {
                       <td className="px-4 py-3">
                         {valid ? <CheckCircle className="h-4 w-4 text-green-500" /> : <AlertCircle className="h-4 w-4 text-red-500" />}
                       </td>
-                      <td className="px-4 py-3 text-gray-900 truncate max-w-[200px]">{row.vendor_name || "-"}</td>
+                      <td className="px-4 py-3 text-gray-900 truncate max-w-50">{row.vendor_name || "-"}</td>
                       <td className="px-4 py-3 text-gray-900">{row.amount || "-"}</td>
                       <td className="px-4 py-3 text-gray-900">{row.date || "-"}</td>
                       <td className="px-4 py-3 text-gray-500">

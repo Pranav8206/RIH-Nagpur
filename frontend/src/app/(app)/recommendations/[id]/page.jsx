@@ -20,7 +20,7 @@ export default function RecommendationDetailView() {
     const { data, isLoading, isError } = useQuery({
        queryKey: ['recommendation', id],
        queryFn: async () => {
-           const res = await axios.get(`http://localhost:5000/api/recommendations/${id}`);
+           const res = await axios.get(`/recommendations/${id}`);
            return res.data;
        }
     });

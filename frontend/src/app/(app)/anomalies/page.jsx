@@ -17,7 +17,7 @@ const fetchAnomalies = async ({ queryKey }) => {
    if (filters.status) params.append('status', filters.status);
    if (filters.severity) params.append('severity', filters.severity);
    
-   const { data } = await axios.get(`http://localhost:5000/api/anomalies?${params.toString()}`);
+   const { data } = await axios.get(`/anomalies?${params.toString()}`);
    return data;
 };
 
@@ -43,7 +43,7 @@ export default function AnomaliesListPage() {
       if(selectedIds.length === 0) return;
       try {
           const promises = selectedIds.map(id => 
-              axios.patch(`http://localhost:5000/api/anomalies/${id}`, { status: actionStatus })
+              axios.patch(`/anomalies/${id}`, { status: actionStatus })
           );
           await Promise.all(promises);
           queryClient.invalidateQueries(['anomalies']);

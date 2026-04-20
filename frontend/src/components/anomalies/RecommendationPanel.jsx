@@ -11,7 +11,7 @@ export default function RecommendationPanel({ recommendation, classificationId, 
     const handleGenerate = async () => {
         setLoading(true);
         try {
-            await axios.post(`http://localhost:5000/api/recommendations/generate`);
+            await axios.post(`/recommendations/generate`);
             await queryClient.invalidateQueries(['anomaly']); 
         } catch(e) {
             alert('Recommendation Logic API Error boundaries.');

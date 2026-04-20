@@ -17,7 +17,7 @@ const fetchRecommendations = async ({ queryKey }) => {
    if (filters.status) params.append('status', filters.status);
    if (filters.priority) params.append('priority', filters.priority);
    
-   const { data } = await axios.get(`http://localhost:5000/api/recommendations?${params.toString()}`);
+   const { data } = await axios.get(`/recommendations?${params.toString()}`);
    return data;
 };
 

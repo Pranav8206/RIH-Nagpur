@@ -11,7 +11,7 @@ export default function RelatedTransactions({ vendor, currentTrxId }) {
        queryFn: async () => {
            if(!vendor) return [];
            // Fetch bounded transaction arrays explicitly resolving similar outputs 
-           const res = await axios.get(`http://localhost:5000/api/transactions?vendor_name=${encodeURIComponent(vendor)}&limit=5`);
+           const res = await axios.get(`/transactions?vendor_name=${encodeURIComponent(vendor)}&limit=5`);
            return res.data;
        },
        enabled: !!vendor
