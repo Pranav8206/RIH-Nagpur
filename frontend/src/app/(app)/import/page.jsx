@@ -14,11 +14,11 @@ import {
   Activity,
   Plus,
   Search,
-  Eye,
   Pencil,
   Trash2,
   X,
   Loader2,
+  List,
 } from "lucide-react";
 import Link from "next/link";
 import { useAppContext } from "@/context/AppContext";
@@ -218,7 +218,7 @@ export default function ImportPage() {
             }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-accent text-surface hover:bg-primary-accent-dark transition font-medium text-sm"
           >
-            <Eye className="h-4 w-4" />
+            <List className="h-4 w-4" />
             View All Transactions
           </button>
           {activeTab === "csv" && (

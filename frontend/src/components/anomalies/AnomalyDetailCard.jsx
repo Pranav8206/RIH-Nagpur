@@ -31,8 +31,7 @@ export default function AnomalyDetailCard({ anomaly, transaction }) {
     <div className="bg-surface rounded-xl border border-border-light shadow-sm overflow-hidden">
       <div className="px-6 py-5 border-b border-border-light bg-surface-hover flex justify-between items-center">
         <h2 className="text-lg font-bold text-text-primary tracking-tight flex items-center">
-          <Target className="w-5 h-5 mr-2 text-primary-accent" /> Matrix
-          Fingerprint
+          <Target className="w-5 h-5 mr-2 text-primary-accent" /> Transaction details
         </h2>
         <div
           className={`px-2.5 py-1 rounded-lg border text-xs font-bold uppercase tracking-widest ${
@@ -49,15 +48,14 @@ export default function AnomalyDetailCard({ anomaly, transaction }) {
 
       <div className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 divide-x divide-gray-100">
-          {/* Transaction Identity Constraints */}
           <div className="space-y-5 pr-4">
             <h3 className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-2 flex items-center">
-              <FileText className="w-3.5 h-3.5 mr-1" /> Bound Transaction
+              <FileText className="w-3.5 h-3.5 mr-1" /> Transaction
             </h3>
 
             <div>
               <div className="text-xs font-medium text-text-tertiary mb-0.5">
-                Vendor Target
+                Vendor
               </div>
               <div className="text-xl font-bold text-text-primary">
                 {transaction.vendor_name}
@@ -67,7 +65,7 @@ export default function AnomalyDetailCard({ anomaly, transaction }) {
             <div className="flex space-x-8">
               <div>
                 <div className="text-xs font-medium text-text-tertiary mb-1 flex items-center">
-                  <Activity className="w-3 h-3 mr-1" /> Volume
+                  <Activity className="w-3 h-3 mr-1" /> Amount
                 </div>
                 <div className="text-xl font-bold text-primary-accent bg-primary-accent-light/30 px-2 py-1 rounded inline-block">
                   {formatCurrency(transaction.amount)}
@@ -75,7 +73,7 @@ export default function AnomalyDetailCard({ anomaly, transaction }) {
               </div>
               <div>
                 <div className="text-xs font-medium text-text-tertiary mb-1 flex items-center">
-                  <Calendar className="w-3 h-3 mr-1" /> Stamp
+                  <Calendar className="w-3 h-3 mr-1" /> Date
                 </div>
                 <div className="text-sm font-semibold text-text-secondary mt-2">
                   {formatDate(transaction.date)}
@@ -86,7 +84,7 @@ export default function AnomalyDetailCard({ anomaly, transaction }) {
             <div className="grid grid-cols-2 gap-4 bg-surface-hover p-3 rounded-lg border border-border-light">
               <div>
                 <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-1 flex items-center">
-                  <Hash className="w-3 h-3 mr-1" /> Invoice ID
+                  <Hash className="w-3 h-3 mr-1" /> Invoice number
                 </div>
                 <div className="text-xs font-mono text-text-secondary font-semibold">
                   {transaction.invoice_number}
@@ -94,7 +92,7 @@ export default function AnomalyDetailCard({ anomaly, transaction }) {
               </div>
               <div>
                 <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mb-1 flex items-center">
-                  <CreditCard className="w-3 h-3 mr-1" /> Method
+                  <CreditCard className="w-3 h-3 mr-1" /> Payment method
                 </div>
                 <div className="text-xs font-semibold text-text-secondary">
                   {transaction.payment_method}
@@ -106,19 +104,18 @@ export default function AnomalyDetailCard({ anomaly, transaction }) {
           {/* Algorithmic Output Constraints */}
           <div className="pl-8 space-y-6">
             <h3 className="text-xs font-bold text-text-tertiary uppercase tracking-widest mb-2 flex items-center">
-              <Activity className="w-3.5 h-3.5 mr-1" /> Output Matrices
+              <Activity className="w-3.5 h-3.5 mr-1" /> Why it was flagged
             </h3>
 
             <div className="bg-surface p-4 rounded-xl border border-border-light shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
               <div className="flex justify-between items-end mb-2">
                 <div className="text-xs font-bold text-text-tertiary uppercase tracking-wider">
-                  Engine Score
+                  Risk score
                 </div>
                 <div className="text-lg font-mono font-bold text-error">
                   {anomaly.anomaly_score.toFixed(2)}
                 </div>
               </div>
-              {/* Progress indicator mimicking accuracy strings */}
               <div className="h-2 w-full bg-surface-hover rounded-full overflow-hidden">
                 <div
                   className="h-full bg-linear-to-r from-red-400 to-red-600 transition-all duration-1000"
@@ -131,20 +128,20 @@ export default function AnomalyDetailCard({ anomaly, transaction }) {
 
             <div>
               <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-1.5">
-                Algorithmic Method
+                Detection method
               </div>
               <div className="text-sm border border-border-light bg-surface-hover w-full py-1.5 px-3 rounded-lg text-text-secondary font-medium inline-block shadow-sm">
-                {anomaly.detection_method || "Statistical Limit Check"}
+                {anomaly.detection_method || "System check"}
               </div>
             </div>
 
             <div>
               <div className="text-[10px] font-bold text-text-tertiary uppercase tracking-widest mb-1.5">
-                Node Log
+                Plain reason
               </div>
               <p className="text-sm text-text-secondary bg-surface p-3 border border-border-light shadow-sm rounded-lg leading-relaxed">
                 {anomaly.reason_description ||
-                  "Manual validation array trigger."}
+                  "This transaction was flagged by the system and should be reviewed."}
               </p>
             </div>
           </div>

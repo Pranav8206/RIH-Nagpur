@@ -7,6 +7,7 @@ import AnomalyFilters from '@/components/anomalies/AnomalyFilters';
 import BulkActions from '@/components/anomalies/BulkActions';
 import { ShieldAlert, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
+import PageHeader from '@/components/shared/PageHeader';
 
 export default function AnomaliesListPage() {
   const queryClient = useQueryClient();
@@ -66,26 +67,25 @@ export default function AnomaliesListPage() {
   return (
       <div className="min-h-[calc(100vh-64px)] bg-transparent pb-12 selection:bg-primary-accent-light/50 font-sans">
          <main className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                   <h1 className="text-2xl font-bold tracking-tight text-text-primary flex items-center">
-                     <ShieldAlert className="w-6 h-6 mr-2 text-primary-accent" />
-                     Anomaly Detection Center
-                   </h1>
-                   <p className="text-sm text-text-secondary mt-1">Review flagged algorithmic multi-layer transactions instantly.</p>
-                </div>
+            <PageHeader
+              title="Anomaly Detection Center"
+              subtitle="Review flagged transactions quickly"
+              icon={ShieldAlert}
+              actions={
                 <button 
-                                    onClick={handleSyncAnomalies}
+                  onClick={handleSyncAnomalies}
                   className="flex items-center text-sm font-medium text-text-secondary bg-surface border border-border-light px-4 py-2 rounded-lg shadow-sm hover:bg-surface-hover transition"
-                                    disabled={isFetching || syncing}
+                  disabled={isFetching || syncing}
                 >
-                                        <RefreshCw className={`w-4 h-4 mr-2 ${(isFetching || syncing) ? 'animate-spin text-primary-accent' : ''}`} /> {syncing ? 'Running detection...' : 'Run anomaly detection'}
+                  <RefreshCw className={`w-4 h-4 mr-2 ${(isFetching || syncing) ? 'animate-spin text-primary-accent' : ''}`} /> 
+                  {syncing ? 'Running detection...' : 'Run anomaly detection'}
                 </button>
-            </div>
+              }
+            />
 
             {isError && (
                 <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-xl text-error shadow-sm animate-in fade-in">
-                   <h4 className="font-semibold text-sm">Failed to Sync Data limits</h4>
+                   <h4 className="font-semibold text-sm">Failed to refresh anomalies</h4>
                    <p className="text-sm mt-1">{error.message}</p>
                 </div>
             )}
@@ -96,7 +96,7 @@ export default function AnomaliesListPage() {
                     <div className="flex-1">
                         <h4 className="font-semibold text-sm">No anomalies are cached yet</h4>
                         <p className="text-sm mt-1 text-amber-800">
-                            This page now auto-scans your imported transactions on first load, but if nothing unusual is found you can run detection again with the refresh button.
+                            This page checks imported transactions automatically, and you can run detection again any time.
                         </p>
                     </div>
                 </div>
@@ -125,8 +125,8 @@ export default function AnomaliesListPage() {
 
                 <div className="p-4 border-t border-border-light flex items-center justify-between text-sm bg-surface-hover mt-auto">
                     <span className="text-text-secondary font-medium">
-                        {data?.data?.length === 0 ? "Showing 0 algorithmic limits" : `Showing Page ${data?.page || 1}`}
-                        {data?.total > 0 && ` of ${Math.ceil(data.total / (data.limit || 20))} Arrays`}
+                        {data?.data?.length === 0 ? "No results found" : `Page ${data?.page || 1}`}
+                        {data?.total > 0 && ` of ${Math.ceil(data.total / (data.limit || 20))}`}
                     </span>
                     <div className="flex space-x-2">
                         <button 
@@ -134,14 +134,14 @@ export default function AnomaliesListPage() {
                            disabled={page === 1 || isLoading}
                            className="px-4 py-1.5 border border-border-light bg-surface hover:bg-surface-hover rounded-lg text-text-secondary disabled:opacity-50 transition-colors shadow-sm font-semibold"
                         >
-                           Previous Segment
+                           Previous Page
                         </button>
                         <button 
                            onClick={() => setPage(p => p + 1)}
                            disabled={!data || data.data.length < (data.limit || 20) || isLoading}
                            className="px-4 py-1.5 border border-border-light bg-surface hover:bg-surface-hover rounded-lg text-text-secondary disabled:opacity-50 transition-colors shadow-sm font-semibold"
                         >
-                           Follow Segment
+                           Next Page
                         </button>
                     </div>
                 </div>

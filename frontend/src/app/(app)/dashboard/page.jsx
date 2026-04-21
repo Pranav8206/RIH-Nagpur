@@ -21,8 +21,10 @@ import {
   RotateCw,
   IndianRupee,
   ShieldAlert,
+  LayoutDashboard,
 } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
+import PageHeader from "@/components/shared/PageHeader";
 
 const PIE_COLORS = ["#3f6212", "#16a34a", "#a16207", "#84cc16"];
 
@@ -192,23 +194,27 @@ export default function DashboardPage() {
   return (
     <div className="min-h-[calc(100vh-64px)] bg-transparent text-text-primary pb-10 selection:bg-primary-accent-light/50">
       <main className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8 pt-7">
-        <div className="flex items-center justify-between gap-4 mb-5">
-          <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
-          <div className="flex items-center gap-3">
-            <button
-              onClick={fetchDashboardData}
-              className="inline-flex items-center gap-2 rounded-xl border border-border-light bg-surface px-4 py-2 text-sm font-semibold text-text-secondary shadow-sm transition hover:bg-surface-hover"
-              title="Sync Data"
-              disabled={loading}
-            >
-              <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              Sync Data
-            </button>
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-accent text-sm font-bold text-surface">
-              {userInitials}
-            </div>
-          </div>
-        </div>
+        <PageHeader
+          title="Dashboard"
+          subtitle="Overview of your financial metrics and insights"
+          icon={LayoutDashboard}
+          actions={
+            <>
+              <button
+                onClick={fetchDashboardData}
+                className="inline-flex items-center gap-2 rounded-xl border border-border-light bg-surface px-4 py-2 text-sm font-semibold text-text-secondary shadow-sm transition hover:bg-surface-hover"
+                title="Sync Data"
+                disabled={loading}
+              >
+                <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                Sync Data
+              </button>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-accent text-sm font-bold text-surface">
+                {userInitials}
+              </div>
+            </>
+          }
+        />
 
         {error && (
           <div className="mb-4 rounded-2xl border border-error/20 bg-error/10 px-4 py-3 text-sm text-error">

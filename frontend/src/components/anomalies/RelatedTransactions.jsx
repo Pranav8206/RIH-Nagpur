@@ -45,9 +45,9 @@ export default function RelatedTransactions({ vendor, currentTrxId }) {
                ) : (
                    <div className="divide-y divide-gray-100">
                        {data.data.filter(t => t._id !== currentTrxId).map((trx) => (
-                           <div key={trx._id} className="p-4 hover:bg-gray-50 transition-colors flex justify-between items-center group cursor-pointer border-l-2 border-l-transparent hover:border-l-blue-400">
+                           <div key={trx._id} className="p-4 hover:bg-gray-50 transition-colors flex justify-between items-center group cursor-pointer border-l-2 border-l-transparent hover:border-l-primary-accent">
                                <div>
-                                   <div className="text-sm font-bold font-mono tracking-tighter text-text-primary group-hover:text-blue-700 transition">
+                                   <div className="text-sm font-bold font-mono tracking-tighter text-text-primary group-hover:text-primary-accent transition">
                                        {formatCurrency(trx.amount)}
                                    </div>
                                    <div className="text-[11px] text-text-tertiary mt-1 font-semibold tracking-widest uppercase">
@@ -58,9 +58,6 @@ export default function RelatedTransactions({ vendor, currentTrxId }) {
                                    <span className="inline-flex items-center text-[10px] font-bold text-text-tertiary uppercase tracking-widest bg-surface shadow-sm px-1.5 py-0.5 rounded border border-border-light">
                                        {trx.status}
                                    </span>
-                                   <Link href="#" className="mt-1 text-primary-accent opacity-0 group-hover:opacity-100 transition p-1" title="View Full Extracted Document">
-                                       <ExternalLink className="w-3.5 h-3.5" />
-                                   </Link>
                                </div>
                            </div>
                        ))}

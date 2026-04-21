@@ -4,6 +4,7 @@ import {
   detectAnomaliesFlow,
   getAnomalies,
   getAnomalyById,
+  getAnomalyExplanation,
   updateAnomaly,
   updateAnomalySchema
 } from "../controllers/anomalyController.js";
@@ -20,6 +21,7 @@ router.use(protect);
 
 router.post("/detect", detectAnomaliesFlow);
 router.get("/", getAnomalies);
+router.get("/:id/explanation", getAnomalyExplanation);
 router.get("/:id", getAnomalyById);
 router.patch("/:id", validateRequest(updateAnomalySchema, "body"), updateAnomaly);
 

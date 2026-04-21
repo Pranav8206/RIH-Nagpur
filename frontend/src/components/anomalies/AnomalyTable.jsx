@@ -45,23 +45,20 @@ export default function AnomalyTable({ data = [], isLoading, selectedIds, onSele
                    onChange={() => onSelectAll(isAllSelected ? [] : currentIds)}
                  />
               </th>
-              <th className="px-5 py-4 whitespace-nowrap hidden lg:table-cell">Matrix ID</th>
-              <th className="px-5 py-4">Vendor Node</th>
-              <th className="px-5 py-4 text-right">Volume</th>
-              <th className="px-5 py-4 text-center">Trigger Date</th>
-              <th className="px-5 py-4 hidden md:table-cell">Detection Pipeline</th>
-              <th className="px-5 py-4">R-Score</th>
-              <th className="px-5 py-4 text-center">Severity</th>
+              <th className="px-5 py-4">Vendor</th>
+              <th className="px-5 py-4 text-right">Amount</th>
+              <th className="px-5 py-4 text-center">Date</th>
+              <th className="px-5 py-4">Reason</th>
+              <th className="px-5 py-4 text-center">Level</th>
               <th className="px-5 py-4 text-center hidden sm:table-cell">Status</th>
-              <th className="px-5 py-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 bg-surface group-trigger">
             {data.length === 0 ? (
                <tr>
-                   <td colSpan="10" className="text-center py-24 text-text-tertiary">
+                   <td colSpan="9" className="text-center py-24 text-text-tertiary">
                       <Activity className="w-8 h-8 mx-auto mb-3 opacity-20" />
-                      <span className="font-medium tracking-wide">No flagged arrays found matching structural limits.</span>
+                     <span className="font-medium tracking-wide">No flagged transactions match the current filters.</span>
                    </td>
                </tr>
             ) : (
@@ -83,25 +80,20 @@ export default function AnomalyTable({ data = [], isLoading, selectedIds, onSele
                          onChange={() => onSelectToggle(row._id)}
                        />
                    </td>
-                   <td className="px-5 py-3.5 text-xs font-mono text-text-tertiary hidden lg:table-cell tracking-wider font-semibold">
-                       {row._id.slice(-6).toUpperCase()}
-                   </td>
                    <td className="px-5 py-3.5">
                        <div className="font-semibold text-text-primary truncate max-w-[180px]">{row.transaction_summary?.vendor_name || 'System Auto'}</div>
                    </td>
+                   
                    <td className="px-5 py-3.5 text-right font-bold text-text-secondary whitespace-nowrap tracking-tight">
                        {formatCurrency(row.transaction_summary?.amount)}
                    </td>
                    <td className="px-5 py-3.5 text-center text-text-tertiary whitespace-nowrap text-xs font-medium">
                        {formatDate(row.transaction_summary?.date)}
                    </td>
-                   <td className="px-5 py-3.5 text-text-secondary text-xs font-medium tracking-wide hidden md:table-cell">
-                       {row.detection_method || 'AI Matrix'}
-                   </td>
-                   <td className="px-5 py-3.5">
-                       <span className={`font-bold font-mono tracking-tighter px-2 py-0.5 rounded text-xs border ${row.anomaly_score > 0.8 ? 'bg-red-50/50 text-error border-red-200' : 'bg-surface-hover text-text-secondary border-border-light'}`}>
-                           {row.anomaly_score}
-                       </span>
+                   <td className="px-5 py-3.5 text-text-secondary font-medium">
+                       <div className="max-w-[320px] truncate" title={row.reason_description || 'No reason available'}>
+                         {row.reason_description || 'No reason available'}
+                       </div>
                    </td>
                    <td className="px-5 py-3.5 text-center">
                        {getSeverityBadge(row.severity)}
@@ -115,14 +107,6 @@ export default function AnomalyTable({ data = [], isLoading, selectedIds, onSele
                            {row.status === 'Resolved' ? <CheckCircle className="w-3 h-3 mr-1 opacity-70" /> : (row.status === 'Reviewed' ? <ShieldAlert className="w-3 h-3 mr-1 opacity-70" /> : <Clock className="w-3 h-3 mr-1 opacity-70" />)}
                            {row.status}
                        </span>
-                   </td>
-                   <td className="px-5 py-3.5 text-right">
-                       <button 
-                         onClick={(e) => { e.stopPropagation(); router.push(`/anomalies/${row._id}`); }}
-                         className="p-1.5 text-text-tertiary hover:text-blue-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-blue-200 hover:shadow-sm group-hover:text-blue-500"
-                       >
-                           <Eye className="w-4 h-4" />
-                       </button>
                    </td>
                  </tr>
                ))
