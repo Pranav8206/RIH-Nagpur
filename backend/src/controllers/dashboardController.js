@@ -1,4 +1,5 @@
 import Joi from "joi";
+import mongoose from "mongoose";
 import { Transaction } from "../models/transaction.model.js";
 import { Anomaly } from "../models/anomaly.model.js";
 import { DashboardMetric } from "../models/dashboardMetric.model.js";
@@ -10,33 +11,34 @@ export const computeMetricsSchema = Joi.object({
   date_snapshot: Joi.date().optional()
 });
 
+const toObjectId = (value) => {
+  if (!value) return value;
+  return mongoose.Types.ObjectId.isValid(value) ? new mongoose.Types.ObjectId(value) : value;
+};
+
 export const getMetrics = async (req, res) => {
   try {
     const userId = req.user?.id;
+    const userObjectId = toObjectId(userId);
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized", error: "Missing identity mapping payload" });
 
     const targetDate = req.query.date_snapshot ? new Date(req.query.date_snapshot) : new Date();
     const dateStr = targetDate.toISOString().split('T')[0];
     const cacheKey = `dashboard:metrics:${userId}:${dateStr}`;
+  const forceRefresh = String(req.query.refresh || "").toLowerCase() === "true";
 
+  if (!forceRefresh) {
     const cachedData = await getCache(cacheKey);
     if (cachedData) {
-        return res.status(200).json({ success: true, from_cache: true, data: cachedData });
+      return res.status(200).json({ success: true, from_cache: true, data: cachedData });
+    }
     }
 
     const endOfDay = new Date(dateStr);
     endOfDay.setHours(23, 59, 59, 999);
 
-    let metric = await DashboardMetric.findOne({
-         user_id: userId,
-         date_snapshot: { $lte: endOfDay, $gte: new Date(dateStr) } // Approximate bounds catching standard generated dates
-    }).lean();
-
-    // Dynamically spin up the exact service calculation fallback if standard fetching yields raw NULL!
-    if (!metric) {
-        metric = await computeMetricsService(userId, endOfDay);
-        metric = metric.toObject ? metric.toObject() : metric;
-    }
+  let metric = await computeMetricsService(userObjectId, endOfDay);
+  metric = metric?.toObject ? metric.toObject() : metric;
 
     const resData = {
         total_transactions: metric.total_transactions || 0,
@@ -45,13 +47,14 @@ export const getMetrics = async (req, res) => {
         anomalies_high_risk: metric.anomalies_high_risk || 0,
         recommendations_open: metric.recommendations_open || 0,
         total_recovered: metric.total_recovered || 0,
+    recovery_potential: metric.recovery_potential || 0,
         recovery_rate: metric.recovery_rate || 0,
         top_leakage_type: metric.top_leakage_type || "None",
         top_vendor: metric.top_vendor || "None",
         top_department: metric.top_department || "None"
     };
 
-    await setCache(cacheKey, resData, 900); // Enforcing standard 15 min TTL
+  await setCache(cacheKey, resData, 60);
 
     return res.status(200).json({ success: true, from_cache: false, data: resData });
 
@@ -64,11 +67,12 @@ export const getMetrics = async (req, res) => {
 export const getTimeline = async (req, res) => {
   try {
     const userId = req.user?.id;
+    const userObjectId = toObjectId(userId);
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized", error: "Missing identity mapping payload" });
 
     const { period = "month", date_from, date_to } = req.query;
 
-    const matchStage = { user_id: userId, is_deleted: { $ne: true } };
+    const matchStage = { user_id: userObjectId, is_deleted: { $ne: true } };
     if (date_from || date_to) {
         matchStage.date = {};
         if (date_from) matchStage.date.$gte = new Date(date_from);
@@ -123,11 +127,12 @@ export const getTimeline = async (req, res) => {
 export const getTopAnomalies = async (req, res) => {
   try {
     const userId = req.user?.id;
+    const userObjectId = toObjectId(userId);
     const limit = parseInt(req.query.limit, 10) || 10;
     
     // Comprehensive joined aggregations dropping nested items cleanly down the chain sequentially
     const pipeline = [
-      { $match: { user_id: userId, status: { $ne: "Resolved" } } },
+      { $match: { user_id: userObjectId, status: { $ne: "Resolved" } } },
       { 
           $lookup: {
             from: "transactions",
@@ -183,9 +188,10 @@ export const getTopAnomalies = async (req, res) => {
 export const getByDepartment = async (req, res) => {
   try {
     const userId = req.user?.id;
+    const userObjectId = toObjectId(userId);
 
     const pipeline = [
-      { $match: { user_id: userId, is_deleted: { $ne: true } } },
+      { $match: { user_id: userObjectId, is_deleted: { $ne: true } } },
       { 
           $lookup: {
             from: "anomalies",
@@ -241,9 +247,10 @@ export const getByDepartment = async (req, res) => {
 export const getByVendor = async (req, res) => {
   try {
     const userId = req.user?.id;
+    const userObjectId = toObjectId(userId);
 
     const pipeline = [
-      { $match: { user_id: userId, is_deleted: { $ne: true } } },
+      { $match: { user_id: userObjectId, is_deleted: { $ne: true } } },
       { 
           $lookup: {
             from: "anomalies",
@@ -294,6 +301,7 @@ export const getByVendor = async (req, res) => {
 export const computeMetricsCache = async (req, res) => {
   try {
     const userId = req.user?.id;
+    const userObjectId = toObjectId(userId);
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized", error: "Missing Identity payload" });
 
     const targetDate = req.body.date_snapshot ? new Date(req.body.date_snapshot) : new Date();
@@ -304,7 +312,7 @@ export const computeMetricsCache = async (req, res) => {
     const cacheKey = `dashboard:metrics:${userId}:${dateStr}`;
     await clearCache(cacheKey);
 
-    const metric = await computeMetricsService(userId, targetDate);
+    const metric = await computeMetricsService(userObjectId, targetDate);
 
     await setCache(cacheKey, metric, 900);
 

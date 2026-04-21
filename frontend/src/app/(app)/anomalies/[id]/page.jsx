@@ -6,6 +6,7 @@ import { ChevronLeft, ShieldAlert } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 
 import AnomalyDetailCard from '@/components/anomalies/AnomalyDetailCard';
+import AnomalyExplanationPanel from '@/components/anomalies/AnomalyExplanationPanel';
 import RecommendationPanel from '@/components/anomalies/RecommendationPanel';
 import AuditTrail from '@/components/anomalies/AuditTrail';
 import RelatedTransactions from '@/components/anomalies/RelatedTransactions';
@@ -15,13 +16,24 @@ export default function AnomalyDetailView() {
     const router = useRouter();
     const { axiosInstance } = useAppContext();
 
-    // The entire context runs strictly mapping React Query states utilizing fast caching logic
     const { data, isLoading, isError } = useQuery({
        queryKey: ['anomaly', id],
        queryFn: async () => {
            const res = await axiosInstance.get(`/anomalies/${id}`);
            return res.data;
        }
+    });
+
+    const {
+        data: explanationData,
+        isLoading: isExplanationLoading
+    } = useQuery({
+        queryKey: ['anomaly-explanation', id],
+        queryFn: async () => {
+            const res = await axiosInstance.get(`/anomalies/${id}/explanation`);
+            return res.data;
+        },
+        enabled: Boolean(id) && !isError
     });
 
     if (isLoading) {
@@ -38,10 +50,10 @@ export default function AnomalyDetailView() {
              <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6 border border-red-100 shadow-sm">
                 <ShieldAlert className="w-10 h-10 text-red-500" />
              </div>
-             <h2 className="text-xl font-bold text-slate-800 tracking-tight">Node Unreachable</h2>
-             <p className="text-gray-500 mt-2 text-sm max-w-sm text-center">The anomaly requested limits could not be verified securely against DB outputs.</p>
+                 <h2 className="text-xl font-bold text-slate-800 tracking-tight">Anomaly not found</h2>
+                 <p className="text-gray-500 mt-2 text-sm max-w-sm text-center">The selected transaction could not be loaded.</p>
              <button onClick={() => router.push('/anomalies')} className="mt-8 text-sm font-semibold text-blue-600 bg-white border border-blue-200 px-5 py-2 rounded-lg hover:bg-blue-50 transition-colors shadow-sm tracking-wide">
-                Return to Matrix
+                     Back to anomalies
              </button>
           </div>
         );
@@ -63,13 +75,13 @@ export default function AnomalyDetailView() {
                        </button>
                        <div className="flex items-center space-x-3 border-l border-gray-200 pl-4">
                            <h1 className="text-xl font-bold text-slate-800 tracking-tight flex items-center">
-                              Review Node <span className="ml-2 font-mono text-gray-400 font-medium text-lg">#{anomaly._id?.slice(-8).toUpperCase()}</span>
+                              Review anomaly <span className="ml-2 font-mono text-gray-400 font-medium text-lg">#{anomaly._id?.slice(-8).toUpperCase()}</span>
                            </h1>
                        </div>
                    </div>
                    
                    <div className="flex items-center">
-                       <span className="text-xs font-bold uppercase tracking-widest text-gray-400 mr-3">Status Lock</span>
+                       <span className="text-xs font-bold uppercase tracking-widest text-gray-400 mr-3">Status</span>
                        <span className={`px-2.5 py-1 rounded border text-[11px] font-bold uppercase tracking-widest shadow-sm ${
                            anomaly.status === 'Resolved' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' :
                            anomaly.status === 'Reviewed' ? 'bg-blue-50 text-blue-800 border-blue-200' :
@@ -86,6 +98,10 @@ export default function AnomalyDetailView() {
                        <AnomalyDetailCard anomaly={anomaly} transaction={transaction} />
                        
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           <AnomalyExplanationPanel
+                             explanation={explanationData?.data}
+                             isLoading={isExplanationLoading}
+                           />
                            <RecommendationPanel recommendation={recommendations?.[0]} anomalyId={id} />
                        </div>
 

@@ -1,69 +1,120 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { RefreshCcw, AlertTriangle } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+  CartesianGrid,
+} from "recharts";
+import {
+  RefreshCcw,
+  TrendingUp,
+  TriangleAlert,
+  Lightbulb,
+  RotateCw,
+  IndianRupee,
+  ShieldAlert,
+  LayoutDashboard,
+} from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
+import PageHeader from "@/components/shared/PageHeader";
 
-import KPICard from "@/components/dashboard/KPICard";
-import AnomalyTable from "@/components/dashboard/AnomalyTable";
-import DepartmentChart from "@/components/dashboard/DepartmentChart";
-import TimelineChart from "@/components/dashboard/TimelineChart";
-import SidebarActions from "@/components/dashboard/SidebarActions";
+const PIE_COLORS = ["#3f6212", "#16a34a", "#a16207", "#84cc16"];
+
+const formatCurrency = (value = 0) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+
+const compactNumber = (value = 0) =>
+  new Intl.NumberFormat("en-IN", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(value || 0);
+
+const toShortDate = (value) => {
+  if (!value) return "-";
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString("en-IN", { month: "short", day: "numeric" });
+    }
+  }
+
+  if (/^\d{4}-\d{2}$/.test(value)) {
+    const [year, month] = value.split("-");
+    const parsed = new Date(Number(year), Number(month) - 1, 1);
+    return parsed.toLocaleDateString("en-IN", { month: "short", year: "2-digit" });
+  }
+
+  return value;
+};
 
 export default function DashboardPage() {
-  const { axiosInstance } = useAppContext();
+  const { axiosInstance, user } = useAppContext();
   const [metrics, setMetrics] = useState(null);
   const [timeline, setTimeline] = useState([]);
   const [topAnomalies, setTopAnomalies] = useState([]);
   const [departmentData, setDepartmentData] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [processing, setProcessing] = useState(false);
 
-  // Standard payload fetcher aggregating endpoints concurrently
   const fetchDashboardData = async () => {
     setLoading(true);
     setError(null);
+
     try {
-      // Resolve mappings bypassing waterfall blocking delays
-      const [metricsRes, timelineRes, topRes, deptRes] = await Promise.all([
-        axiosInstance
-          .get("/dashboard/metrics")
-          .catch(() => ({ data: { data: {} } })),
-        axiosInstance
-          .get("/dashboard/timeline?period=month")
-          .catch(() => ({ data: { data: { dates: [] } } })),
-        axiosInstance
-          .get("/dashboard/top-anomalies?limit=5")
-          .catch(() => ({ data: { data: [] } })),
-        axiosInstance
-          .get("/dashboard/by-department")
-          .catch(() => ({ data: { data: [] } })),
+      const [metricsRes, timelineRes, topRes, deptRes] = await Promise.allSettled([
+        axiosInstance.get("/dashboard/metrics?refresh=true"),
+        axiosInstance.get("/dashboard/timeline?period=day"),
+        axiosInstance.get("/dashboard/top-anomalies?limit=6"),
+        axiosInstance.get("/dashboard/by-department"),
       ]);
 
-      setMetrics(metricsRes.data.data);
+      const metricsData = metricsRes.status === "fulfilled" ? (metricsRes.value?.data?.data || {}) : {};
+      const timelineData = timelineRes.status === "fulfilled"
+        ? (timelineRes.value?.data?.data || { dates: [], total_spend: [], anomalies: [], recovered: [] })
+        : { dates: [], total_spend: [], anomalies: [], recovered: [] };
+      const topData = topRes.status === "fulfilled" ? (topRes.value?.data?.data || []) : [];
+      const deptData = deptRes.status === "fulfilled" ? (deptRes.value?.data?.data || []) : [];
 
-      // Timeline endpoints return raw parallel arrays `dates: [], anomalies: []`.
-      // Convert into Array of Objects [{ date, anomalies }] structurally required by Recharts
-      const tData = timelineRes.data.data;
-      if (tData && tData.dates) {
-        const tFormatted = tData.dates.map((date, idx) => ({
-          dates: date,
-          total_spend: tData.total_spend[idx],
-          anomalies: tData.anomalies[idx],
-          recovered: tData.recovered[idx],
-        }));
-        setTimeline(tFormatted);
+      setMetrics(metricsData);
+
+      const tData = timelineData;
+      const tDates = Array.isArray(tData?.dates) ? tData.dates : [];
+      const tSpend = Array.isArray(tData?.total_spend) ? tData.total_spend : [];
+      const tAnomalies = Array.isArray(tData?.anomalies) ? tData.anomalies : [];
+
+      const formattedTimeline = tDates.map((date, idx) => ({
+        dates: date,
+        total_spend: tSpend[idx] || 0,
+        anomalies: tAnomalies[idx] || 0,
+      }));
+
+      setTimeline(formattedTimeline);
+      setTopAnomalies(topData);
+      setDepartmentData(deptData);
+
+      if (
+        metricsRes.status === "rejected" ||
+        timelineRes.status === "rejected" ||
+        topRes.status === "rejected" ||
+        deptRes.status === "rejected"
+      ) {
+        setError("Some dashboard data sources failed to load. Showing available live data.");
       }
-
-      setTopAnomalies(topRes.data.data || []);
-      setDepartmentData(deptRes.data.data || []);
-    } catch (err) {
-      console.error("Failed fetching dashboard data", err);
-      setError(
-        "Connection to Analytics Core Refused. Ensure backend services are booting correctly locally.",
-      );
+    } catch {
+      setError("Could not load dashboard analytics. Please check backend connectivity and try again.");
     } finally {
       setLoading(false);
     }
@@ -73,124 +124,270 @@ export default function DashboardPage() {
     fetchDashboardData();
   }, []);
 
-  const handleRunDetection = async () => {
-    setProcessing(true);
-    try {
-      await axiosInstance.post("/anomalies/detect", {});
-      await fetchDashboardData();
-    } catch (err) {
-      alert("Detection ML engine failed to synchronize.");
-    } finally {
-      setProcessing(false);
-    }
-  };
+  const totalSpend = metrics?.total_spend || 0;
+  const potentialSavings = metrics?.recovery_potential || 0;
+  const unusualTransactions = metrics?.anomalies_detected || 0;
+  const spendReductionPct = totalSpend > 0 ? Math.round((potentialSavings / totalSpend) * 100) : 0;
 
-  const handleGenerateRecommendations = async () => {
-    setProcessing(true);
-    try {
-      await axiosInstance.post("/recommendations/generate", {});
-      await fetchDashboardData();
-    } catch (err) {
-      alert("Recommendation generation failed.");
-    } finally {
-      setProcessing(false);
-    }
-  };
+  const trendData = timeline.slice(-10).map((item) => ({
+    label: toShortDate(item.dates),
+    spend: item.total_spend || 0,
+    anomalies: item.anomalies || 0,
+  }));
+
+  const topDept = departmentData.slice(0, 3);
+  const totalDeptSpend = topDept.reduce((sum, row) => sum + (row.total_spend || 0), 0);
+  const pieData = topDept.map((row) => ({
+    name: row.department || "Uncategorized",
+    value: row.total_spend || 0,
+    pct: totalDeptSpend > 0 ? Math.round(((row.total_spend || 0) / totalDeptSpend) * 100) : 0,
+  }));
+
+  const issueRows = topAnomalies.slice(0, 3).map((row) => {
+    const vendor = row.transaction?.vendor_name || "Vendor";
+    const method = row.detection_method || "Anomaly";
+    const action = row.recommendation?.status === "Pending" ? "Fix Now" : "Analyze";
+
+    return {
+      id: row._id,
+      issue: `${method} - ${vendor}`,
+      impact: row.recovery_potential || row.transaction?.amount || 0,
+      action,
+    };
+  });
+
+  const insights = [
+    {
+      id: "insight-1",
+      icon: TriangleAlert,
+      text: `Unusual transactions this cycle: ${unusualTransactions}`,
+      tone: "bg-warning/10 text-warning",
+    },
+    {
+      id: "insight-2",
+      icon: RotateCw,
+      text: `${metrics?.recommendations_open || 0} pending recommendations can be actioned now`,
+      tone: "bg-surface-hover text-primary-accent-dark",
+    },
+    {
+      id: "insight-3",
+      icon: ShieldAlert,
+      text: `High risk anomalies: ${metrics?.anomalies_high_risk || 0}`,
+      tone: "bg-surface-hover text-text-secondary",
+    },
+    {
+      id: "insight-4",
+      icon: Lightbulb,
+      text: `Top spend department: ${metrics?.top_department || "-"}`,
+      tone: "bg-surface-hover text-text-secondary",
+    },
+  ];
+
+  const userInitials =
+    user?.name
+      ?.split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "JD";
 
   return (
-    <div className="min-h-screen bg-transparent text-text-primary pb-12 font-sans selection:bg-primary-accent-light/50">
-      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 pt-6 max-w-screen-2xl mx-auto mb-2">
-        <h2 className="text-2xl font-bold text-text-primary">
-          Dashboard Overview
-        </h2>
-        <div className="flex items-center space-x-5">
-          <button
-            onClick={fetchDashboardData}
-            className="flex items-center gap-2 text-sm font-medium text-text-secondary bg-surface border border-border-light px-4 py-2 rounded-lg shadow-sm hover:bg-surface-hover transition"
-            title="Sync Dashboard"
-          >
-            <RefreshCcw
-              className={`w-4 h-4 ${loading ? "animate-spin text-primary-accent" : ""}`}
-            />
-            <span className="hidden sm:inline">Sync Data</span>
-          </button>
-          <div className="h-9 w-9 rounded-full bg-linear-to-tr from-primary-accent to-secondary-accent flex items-center justify-center text-surface text-sm font-bold shadow-md cursor-pointer hover:shadow-lg transition-shadow border-2 border-surface">
-            JD
-          </div>
-        </div>
-      </div>
+    <div className="min-h-[calc(100vh-64px)] bg-transparent text-text-primary pb-10 selection:bg-primary-accent-light/50">
+      <main className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8 pt-7">
+        <PageHeader
+          title="Dashboard"
+          subtitle="Overview of your financial metrics and insights"
+          icon={LayoutDashboard}
+          actions={
+            <>
+              <button
+                onClick={fetchDashboardData}
+                className="inline-flex items-center gap-2 rounded-xl border border-border-light bg-surface px-4 py-2 text-sm font-semibold text-text-secondary shadow-sm transition hover:bg-surface-hover"
+                title="Sync Data"
+                disabled={loading}
+              >
+                <RefreshCcw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                Sync Data
+              </button>
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-accent text-sm font-bold text-surface">
+                {userInitials}
+              </div>
+            </>
+          }
+        />
 
-        <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        {/* Global Error Handle */}
         {error && (
-          <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-xl flex items-start text-error shadow-sm animate-in fade-in slide-in-from-top-4">
-            <AlertTriangle className="w-5 h-5 mr-3 shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-semibold text-sm">
-                System Synchronization Error
-              </h4>
-              <p className="text-sm mt-1 opacity-90">{error}</p>
-            </div>
+          <div className="mb-4 rounded-2xl border border-error/20 bg-error/10 px-4 py-3 text-sm text-error">
+            {error}
           </div>
         )}
 
-        {/* KPIs Matrix */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
-          <KPICard
-            title="Gross Transactions"
-            value={metrics?.total_transactions?.toLocaleString() || "0"}
-            isLoading={loading}
-          />
-          <KPICard
-            title="Corporate Spend"
-            value={` ₹${((metrics?.total_spend || 0) / 1000).toFixed(1)}k`}
-            trend={2.4}
-            isPositiveTrend={false}
-            isLoading={loading}
-          />
-          <KPICard
-            title="Active Anomalies"
-            value={metrics?.anomalies_detected?.toLocaleString() || "0"}
-            trend={12}
-            isPositiveTrend={false}
-            isLoading={loading}
-          />
-          <KPICard
-            title="Extracted Recovery Pool"
-            value={` ₹${(metrics?.total_recovered + (metrics?.recovery_potential || 0) || 0).toLocaleString()}`}
-            isLoading={loading}
-            hasAction={true}
-            onActionClick={() => alert("Bulk execution pipeline triggered!")}
-          />
-          <KPICard
-            title="Yield Rate"
-            value={`${metrics?.recovery_rate || 0}%`}
-            trend={5.1}
-            isPositiveTrend={true}
-            isLoading={loading}
-          />
-        </div>
+        <section className="rounded-3xl border border-border-light bg-surface p-4 sm:p-5 shadow-sm">
+          <h2 className="text-xl font-semibold mb-4">This Month Summary</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <article className="rounded-2xl border border-border-light bg-surface-hover p-4">
+              <p className="text-sm text-text-secondary">Total Spend</p>
+              <p className="mt-1 text-3xl sm:text-4xl font-semibold text-text-primary leading-none">{formatCurrency(totalSpend)}</p>
+            </article>
 
-        {/* Center Heavy Elements */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-8">
-          {/* Main Action Table */}
-          <div className="lg:col-span-9 h-125">
-            <AnomalyTable data={topAnomalies} isLoading={loading} />
-          </div>
-          {/* Workflow Actions Segment */}
-          <div className="lg:col-span-3">
-            <SidebarActions
-              onRunDetection={handleRunDetection}
-              onGenerateRecommendations={handleGenerateRecommendations}
-              isProcessing={processing}
-            />
-          </div>
-        </div>
+            <article className="rounded-2xl border border-border-light bg-surface-hover p-4">
+              <div className="flex items-start justify-between">
+                <p className="text-sm text-text-secondary">Potential Savings</p>
+                <span className="inline-flex items-center rounded-full bg-primary-accent-light/40 px-2 py-0.5 text-xs font-semibold text-primary-accent-dark">
+                  +{compactNumber(potentialSavings)}
+                </span>
+              </div>
+              <p className="mt-1 text-3xl sm:text-4xl font-semibold text-text-primary leading-none">{formatCurrency(potentialSavings)}</p>
+            </article>
 
-        {/* Analytical Splits */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-          <TimelineChart data={timeline} isLoading={loading} />
-          <DepartmentChart data={departmentData} isLoading={loading} />
+            <article className="rounded-2xl border border-border-light bg-surface-hover p-4">
+              <p className="text-sm text-text-secondary">Unusual Transactions</p>
+              <p className="mt-1 text-3xl sm:text-4xl font-semibold text-text-primary leading-none">{unusualTransactions}</p>
+            </article>
+          </div>
+
+          <div className="mt-3 flex items-center gap-2 rounded-2xl bg-primary-accent-light/25 px-4 py-2 text-primary-accent-dark">
+            <TrendingUp className="h-4 w-4" />
+            <p className="text-sm">
+              You can <span className="font-semibold">reduce {spendReductionPct}%</span> of your expenses
+            </p>
+          </div>
+        </section>
+
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <section className="lg:col-span-7 rounded-3xl border border-border-light bg-surface p-5 shadow-sm">
+            <h3 className="text-xl font-semibold mb-3">Key Insights</h3>
+            <div className="space-y-2">
+              {insights.map((item) => (
+                <div key={item.id} className={`flex items-center gap-2 rounded-xl px-3 py-2 ${item.tone}`}>
+                  <item.icon className="h-4 w-4" />
+                  <p className="text-sm">{item.text}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="lg:col-span-5 rounded-3xl border border-border-light bg-surface p-5 shadow-sm">
+            <div className="mb-2 flex items-center justify-between">
+              <div>
+                <h3 className="text-xl font-semibold">Spending Trend</h3>
+                <p className="text-text-tertiary">Your spending pattern</p>
+              </div>
+              <IndianRupee className="h-4 w-4 text-primary-accent-dark" />
+            </div>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trendData} margin={{ top: 10, right: 10, left: -18, bottom: 0 }}>
+                  <CartesianGrid stroke="#e5e7eb" vertical={false} />
+                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "#6B7280" }} />
+                  <YAxis hide />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 14, border: "1px solid #e5e7eb", backgroundColor: "#FFFFFF" }}
+                    formatter={(value, key) => [key === "spend" ? formatCurrency(Number(value)) : value, key === "spend" ? "Spend" : "Anomalies"]}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="spend"
+                    stroke="#3f6212"
+                    strokeWidth={3}
+                    dot={{ r: 0 }}
+                    activeDot={{ r: 5, stroke: "#3f6212", fill: "#fff" }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </section>
+
+          <section className="lg:col-span-7 rounded-3xl border border-border-light bg-surface p-5 shadow-sm">
+            <h3 className="text-xl font-semibold mb-2">Top Issues to Fix</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-150 text-left">
+                <thead>
+                  <tr className="text-sm uppercase text-text-tertiary border-b border-border-light">
+                    <th className="py-2 font-semibold">Issue</th>
+                    <th className="py-2 font-semibold">Impact</th>
+                    <th className="py-2 font-semibold text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading && (
+                    <tr>
+                      <td colSpan={3} className="py-5 text-text-tertiary">Loading issue summary...</td>
+                    </tr>
+                  )}
+
+                  {!loading && issueRows.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="py-5 text-text-tertiary">No active issues available for this cycle.</td>
+                    </tr>
+                  )}
+
+                  {!loading && issueRows.map((row, index) => (
+                    <tr key={row.id} className="border-b border-border-light/70 last:border-0">
+                      <td className="py-3 text-base text-text-primary">{row.issue}</td>
+                      <td className="py-3 text-base font-semibold text-text-primary">{formatCurrency(row.impact)}</td>
+                      <td className="py-3 text-right">
+                        <span
+                          className={`inline-flex items-center rounded-xl px-3 py-1.5 text-sm font-semibold ${
+                            index === 0
+                              ? "bg-secondary-accent text-surface"
+                              : index === 1
+                                ? "bg-warning/20 text-warning"
+                                : "bg-primary-accent-light/30 text-primary-accent-dark"
+                          }`}
+                        >
+                          {row.action}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section className="lg:col-span-5 rounded-3xl border border-border-light bg-surface p-5 shadow-sm">
+            <h3 className="text-xl font-semibold">Where your money goes</h3>
+            <p className="mt-1 text-text-tertiary text-sm">
+              {pieData[0]?.name ? `${pieData[0].name} is your highest expense` : "Spend split by department"}
+            </p>
+
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 items-center">
+              <div className="space-y-2">
+                {pieData.map((item, index) => (
+                  <div key={item.name} className="flex items-center justify-between rounded-lg bg-surface-hover px-3 py-2 border border-border-light">
+                    <div className="flex items-center gap-2">
+                      <span className="h-3 w-3 rounded-full" style={{ backgroundColor: PIE_COLORS[index % PIE_COLORS.length] }} />
+                      <span className="text-sm text-text-primary">{item.name}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-text-secondary">{item.pct}%</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="value"
+                      nameKey="name"
+                      innerRadius={52}
+                      outerRadius={88}
+                      stroke="none"
+                      label={({ percent }) => `${Math.round((percent || 0) * 100)}%`}
+                      labelLine={false}
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`${entry.name}-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(val) => formatCurrency(Number(val))} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
     </div>

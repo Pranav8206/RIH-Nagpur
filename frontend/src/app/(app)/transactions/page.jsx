@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, CalendarDays, RefreshCcw } from "lucide-react";
 import { useAppContext } from "@/context/AppContext";
+import PageHeader from "@/components/shared/PageHeader";
 
 const weekdayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const monthLabels = [
@@ -230,73 +231,69 @@ export default function TransactionsCalendarPage() {
   return (
     <div className="min-h-screen bg-transparent text-text-primary pb-12 font-sans selection:bg-primary-accent-light/50">
       <main className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight flex items-center">
-              <CalendarDays className="w-6 h-6 mr-2 text-primary-accent" />
-              Transaction Calendar
-            </h1>
-            <p className="text-sm text-text-secondary mt-1 font-medium">
-              Review all user transactions by date for faster auditing and leakage spotting.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={goPrevMonth}
-              className="p-2 rounded-lg border border-border-light bg-surface hover:bg-surface-hover"
-              aria-label="Previous month"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-            <select
-              value={currentMonth.getMonth()}
-              onChange={(event) =>
-                setCurrentMonth(
-                  (prev) => new Date(prev.getFullYear(), Number(event.target.value), 1),
-                )
-              }
-              className="rounded-lg border border-border-light bg-surface px-3 py-2 text-sm font-semibold text-text-primary"
-              aria-label="Select month"
-            >
-              {monthLabels.map((label, index) => (
-                <option key={label} value={index}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={currentMonth.getFullYear()}
-              onChange={(event) =>
-                setCurrentMonth(
-                  (prev) => new Date(Number(event.target.value), prev.getMonth(), 1),
-                )
-              }
-              className="rounded-lg border border-border-light bg-surface px-3 py-2 text-sm font-semibold text-text-primary"
-              aria-label="Select year"
-            >
-              {selectableYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={goNextMonth}
-              className="p-2 rounded-lg border border-border-light bg-surface hover:bg-surface-hover"
-              aria-label="Next month"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => fetchMonthTransactions(currentMonth, filters)}
-              className="flex items-center gap-2 text-sm font-semibold text-text-secondary bg-surface border border-border-light px-3 py-2 rounded-lg hover:bg-surface-hover"
-            >
-              <RefreshCcw className={`w-4 h-4 ${loading ? "animate-spin text-primary-accent" : ""}`} />
-              Sync
-            </button>
-          </div>
-        </div>
+        <PageHeader
+          title="Transaction Calendar"
+          subtitle="Review all user transactions by date for faster auditing and leakage spotting"
+          icon={CalendarDays}
+          showViewTransactions={false}
+          actions={
+            <>
+              <button
+                onClick={goPrevMonth}
+                className="p-2 rounded-lg border border-border-light bg-surface hover:bg-surface-hover"
+                aria-label="Previous month"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <select
+                value={currentMonth.getMonth()}
+                onChange={(event) =>
+                  setCurrentMonth(
+                    (prev) => new Date(prev.getFullYear(), Number(event.target.value), 1),
+                  )
+                }
+                className="rounded-lg border border-border-light bg-surface px-3 py-2 text-sm font-semibold text-text-primary"
+                aria-label="Select month"
+              >
+                {monthLabels.map((label, index) => (
+                  <option key={label} value={index}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={currentMonth.getFullYear()}
+                onChange={(event) =>
+                  setCurrentMonth(
+                    (prev) => new Date(Number(event.target.value), prev.getMonth(), 1),
+                  )
+                }
+                className="rounded-lg border border-border-light bg-surface px-3 py-2 text-sm font-semibold text-text-primary"
+                aria-label="Select year"
+              >
+                {selectableYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={goNextMonth}
+                className="p-2 rounded-lg border border-border-light bg-surface hover:bg-surface-hover"
+                aria-label="Next month"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => fetchMonthTransactions(currentMonth, filters)}
+                className="flex items-center gap-2 text-sm font-semibold text-text-secondary bg-surface border border-border-light px-3 py-2 rounded-lg hover:bg-surface-hover"
+              >
+                <RefreshCcw className={`w-4 h-4 ${loading ? "animate-spin text-primary-accent" : ""}`} />
+                Sync
+              </button>
+            </>
+          }
+        />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
           <input

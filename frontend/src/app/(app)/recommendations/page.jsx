@@ -2,8 +2,9 @@
 
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { RefreshCw, Sparkles, MessageCircleHeart, CheckCircle2 } from 'lucide-react';
+import { RefreshCcw, Sparkles, MessageCircleHeart, CheckCircle2, Lightbulb } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
+import PageHeader from '@/components/shared/PageHeader';
 
 import RecommendationTable from '@/components/recommendations/RecommendationTable';
 
@@ -11,6 +12,8 @@ export default function RecommendationsListPage() {
   const queryClient = useQueryClient();
   const { axiosInstance } = useAppContext();
   const [page, setPage] = useState(1);
+   const [reanalyzing, setReanalyzing] = useState(false);
+   const [reanalysisMessage, setReanalysisMessage] = useState('');
 
   const { data, isLoading, isError, error, isFetching } = useQuery({
     queryKey: ['recommendations', page],
@@ -37,53 +40,93 @@ export default function RecommendationsListPage() {
       }
    });
 
+   const handleRefresh = () => {
+      setReanalysisMessage('');
+      queryClient.invalidateQueries({ queryKey: ['recommendations'] });
+      queryClient.invalidateQueries({ queryKey: ['recommendation-summary'] });
+   };
+
+   const handleReanalyze = async () => {
+      setReanalyzing(true);
+      setReanalysisMessage('');
+      try {
+         await axiosInstance.post('/anomalies/detect', {});
+         const response = await axiosInstance.post('/recommendations/generate', {});
+         const generated = response?.data?.data?.generated ?? response?.data?.generated ?? 0;
+         const message = response?.data?.message || (generated > 0
+            ? `Reanalysis complete. ${generated} recommendation(s) generated.`
+            : 'Reanalysis complete. No new recommendations were created.');
+         setReanalysisMessage(message);
+         queryClient.invalidateQueries({ queryKey: ['recommendations'] });
+         queryClient.invalidateQueries({ queryKey: ['recommendation-summary'] });
+      } catch (err) {
+         setReanalysisMessage(err?.response?.data?.message || 'Reanalysis failed. Please try again.');
+      } finally {
+         setReanalyzing(false);
+      }
+   };
+
   return (
-      <div className="min-h-[calc(100vh-64px)] bg-[#FBF8F2] pb-12 font-sans text-slate-800 selection:bg-[#d7e0d7]">
-         <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-            <div className="flex items-center justify-between gap-4 mb-8">
-                <div>
-                   <p className="text-sm font-medium text-slate-500 tracking-wide uppercase">Recommendations</p>
-                   <h1 className="text-3xl font-semibold tracking-tight text-slate-800 mt-1">You can save {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(totalPotential)} per month</h1>
-                </div>
-                <button
-                           onClick={() => {
-                              queryClient.invalidateQueries(['recommendations']);
-                              queryClient.invalidateQueries(['recommendation-summary']);
-                           }}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm hover:bg-slate-50 transition"
-                  disabled={isFetching}
-                >
-                  <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-                  Sync Database
-                </button>
-            </div>
+      <div className="min-h-[calc(100vh-64px)] bg-transparent pb-12 font-sans text-text-primary selection:bg-primary-accent-light/50">
+         <main className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+            <PageHeader
+              title={`You can save ${new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(totalPotential)} per month`}
+              subtitle="Recommendations"
+              icon={Lightbulb}
+              actions={
+                        <div className="flex items-center gap-2">
+                           <button
+                              onClick={handleRefresh}
+                              className="inline-flex items-center gap-2 rounded-full border border-border-light bg-surface px-4 py-2 text-sm font-medium text-text-secondary shadow-sm hover:bg-surface-hover transition"
+                              disabled={isFetching || reanalyzing}
+                           >
+                              <RefreshCcw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+                              Refresh
+                           </button>
+                           <button
+                              onClick={handleReanalyze}
+                              className="inline-flex items-center gap-2 rounded-full border border-primary-accent-light bg-primary-accent px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-primary-accent-dark transition disabled:opacity-60"
+                              disabled={isFetching || reanalyzing}
+                           >
+                              <Sparkles className={`h-4 w-4 ${reanalyzing ? 'animate-spin' : ''}`} />
+                              {reanalyzing ? 'Reanalyzing...' : 'Reanalyze Recommendations'}
+                           </button>
+                        </div>
+              }
+            />
+
+                  {reanalysisMessage && (
+                     <div className="mb-6 rounded-2xl border border-primary-accent-light bg-primary-accent-light/20 p-4 text-sm text-text-secondary shadow-sm">
+                        {reanalysisMessage}
+                     </div>
+                  )}
 
             {isError && (
-                <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-red-700 shadow-sm animate-in fade-in">
+                <div className="mb-6 rounded-2xl border border-error/20 bg-error/10 p-4 text-error shadow-sm animate-in fade-in">
                    <h4 className="font-semibold text-sm">Unable to load recommendations</h4>
                    <p className="text-sm mt-1">{error.message}</p>
                 </div>
             )}
 
-                  <section className="mb-6 rounded-3xl border border-[#dfe6da] bg-[#f7faf5] p-5 shadow-[0_10px_25px_rgba(15,23,42,0.05)]">
-                     <div className="flex items-center gap-2 text-sm font-semibold text-[#6c7f65] mb-2">
+                  <section className="mb-6 rounded-3xl border border-border-light bg-surface p-5 shadow-sm">
+                     <div className="flex items-center gap-2 text-sm font-semibold text-primary-accent-dark mb-2">
                         <MessageCircleHeart className="h-4 w-4" />
                         Friendly AI Summary
                      </div>
 
                      {summaryLoading ? (
-                        <p className="text-sm text-slate-500">Preparing a simple summary of your transactions...</p>
+                        <p className="text-sm text-text-tertiary">Preparing a simple summary of your transactions...</p>
                      ) : (
                         <>
-                           <p className="text-slate-700 text-sm leading-6">
+                           <p className="text-text-secondary text-sm leading-6">
                               {summaryData?.overview || 'Your recommendations are ready. Start with the top-impact items to maximize monthly savings.'}
                            </p>
 
                            {Array.isArray(summaryData?.recommendations) && summaryData.recommendations.length > 0 && (
                               <ul className="mt-3 space-y-2">
                                  {summaryData.recommendations.slice(0, 3).map((tip, index) => (
-                                    <li key={`${tip}-${index}`} className="flex items-start gap-2 text-sm text-slate-600">
-                                       <CheckCircle2 className="h-4 w-4 text-[#7a8c72] mt-0.5 shrink-0" />
+                                    <li key={`${tip}-${index}`} className="flex items-start gap-2 text-sm text-text-secondary">
+                                       <CheckCircle2 className="h-4 w-4 text-primary-accent-dark mt-0.5 shrink-0" />
                                        <span>{tip}</span>
                                     </li>
                                  ))}
@@ -93,35 +136,52 @@ export default function RecommendationsListPage() {
                      )}
                   </section>
 
-            <div className="rounded-3xl border border-slate-200 bg-white/80 shadow-[0_12px_40px_rgba(15,23,42,0.06)] overflow-hidden backdrop-blur-sm">
-                <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-white/70">
-                  <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
-                    <Sparkles className="h-4 w-4 text-[#7a8c72]" />
+                  <div className="rounded-3xl border border-border-light bg-surface shadow-sm overflow-hidden">
+                        <div className="flex items-center justify-between border-b border-border-light px-5 py-4 bg-surface-hover">
+                           <div className="flex items-center gap-2 text-sm font-medium text-text-tertiary">
+                              <Sparkles className="h-4 w-4 text-primary-accent-dark" />
                     Suggested actions
                   </div>
-                  <div className="text-sm text-slate-500">{data?.data?.length || 0} items</div>
+                           <div className="text-sm text-text-tertiary">{data?.data?.length || 0} items</div>
                 </div>
                 <RecommendationTable
                    data={data?.data || []}
                    isLoading={isLoading}
                 />
 
-                <div className="flex items-center justify-between gap-4 border-t border-slate-200 px-5 py-4 bg-white/70 text-sm">
-                    <span className="text-slate-500">
+                        {!isLoading && !isError && (data?.data?.length || 0) === 0 && (
+                           <div className="mx-5 mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-900">
+                              <p className="text-sm font-semibold">No recommendations right now</p>
+                              <p className="mt-1 text-sm text-amber-800">
+                                 Common reasons: no anomalies detected yet, all anomalies are resolved, or recommendations were already generated for existing anomalies.
+                              </p>
+                              <button
+                                 onClick={handleReanalyze}
+                                 disabled={reanalyzing}
+                                 className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100 transition disabled:opacity-60"
+                              >
+                                 <Sparkles className={`h-4 w-4 ${reanalyzing ? 'animate-spin' : ''}`} />
+                                 {reanalyzing ? 'Reanalyzing...' : 'Run Reanalysis'}
+                              </button>
+                           </div>
+                        )}
+
+                <div className="flex items-center justify-between gap-4 border-t border-border-light px-5 py-4 bg-surface-hover text-sm">
+                    <span className="text-text-tertiary">
                         Page {data?.page || 1}{data?.total > 0 ? ` of ${Math.ceil(data.total / (data.limit || 20))}` : ''}
                     </span>
                     <div className="flex gap-2">
                         <button
                            onClick={() => setPage((p) => Math.max(1, p - 1))}
                            disabled={page === 1 || isLoading}
-                           className="rounded-full border border-slate-200 bg-white px-4 py-2 font-medium text-slate-600 shadow-sm disabled:opacity-50 hover:bg-slate-50 transition"
+                           className="rounded-full border border-border-light bg-surface px-4 py-2 font-medium text-text-secondary shadow-sm disabled:opacity-50 hover:bg-surface-hover transition"
                         >
                            Previous
                         </button>
                         <button
                            onClick={() => setPage((p) => p + 1)}
                            disabled={!data || data.data.length < (data.limit || 20) || isLoading}
-                           className="rounded-full border border-slate-200 bg-white px-4 py-2 font-medium text-slate-600 shadow-sm disabled:opacity-50 hover:bg-slate-50 transition"
+                           className="rounded-full border border-border-light bg-surface px-4 py-2 font-medium text-text-secondary shadow-sm disabled:opacity-50 hover:bg-surface-hover transition"
                         >
                            Next
                         </button>

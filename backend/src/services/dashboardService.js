@@ -2,6 +2,12 @@ import { DashboardMetric } from "../models/dashboardMetric.model.js";
 import { Transaction } from "../models/transaction.model.js";
 import { Anomaly } from "../models/anomaly.model.js";
 import { Recommendation } from "../models/recommendation.model.js";
+import mongoose from "mongoose";
+
+const toObjectId = (value) => {
+  if (!value) return value;
+  return mongoose.Types.ObjectId.isValid(value) ? new mongoose.Types.ObjectId(value) : value;
+};
 
 /**
  * Computes live mathematical aggregations avoiding sub-joins utilizing grouping for performance
@@ -11,12 +17,15 @@ import { Recommendation } from "../models/recommendation.model.js";
  */
 export const computeMetrics = async (user_id, targetDate = new Date()) => {
   try {
+    const userObjectId = toObjectId(user_id);
     const endDate = new Date(targetDate);
     endDate.setHours(23, 59, 59, 999); // Force alignment to end of given Date
+    const startDate = new Date(endDate);
+    startDate.setHours(0, 0, 0, 0);
 
     // 1. Transaction level sums
     const trxStats = await Transaction.aggregate([
-      { $match: { user_id: user_id, date: { $lte: endDate } } },
+      { $match: { user_id: userObjectId, is_deleted: { $ne: true }, date: { $lte: endDate } } },
       { 
         $group: {
           _id: null,
@@ -28,14 +37,14 @@ export const computeMetrics = async (user_id, targetDate = new Date()) => {
 
     // Secondary pipelines for quick facet extractions avoiding dense code
     const vendorStats = await Transaction.aggregate([
-      { $match: { user_id: user_id, date: { $lte: endDate } } },
+      { $match: { user_id: userObjectId, is_deleted: { $ne: true }, date: { $lte: endDate } } },
       { $group: { _id: "$vendor_name", sumSpend: { $sum: "$amount" } } },
       { $sort: { sumSpend: -1 } },
       { $limit: 1 }
     ]);
 
     const deptStats = await Transaction.aggregate([
-      { $match: { user_id: user_id, date: { $lte: endDate } } },
+      { $match: { user_id: userObjectId, is_deleted: { $ne: true }, date: { $lte: endDate } } },
       { $group: { _id: "$department", sumSpend: { $sum: "$amount" } } },
       { $sort: { sumSpend: -1 } },
       { $limit: 1 }
@@ -44,7 +53,7 @@ export const computeMetrics = async (user_id, targetDate = new Date()) => {
     // 2. Anomaly level aggregations
     // Fast conditional grouping internally utilizing MongoDB math limits
     const anomalyStats = await Anomaly.aggregate([
-      { $match: { user_id: user_id, detected_at: { $lte: endDate } } },
+      { $match: { user_id: userObjectId, detected_at: { $lte: endDate } } },
       {
         $group: {
            _id: null,
@@ -58,7 +67,7 @@ export const computeMetrics = async (user_id, targetDate = new Date()) => {
 
     // 3. Recommendations tracking
     const recStats = await Recommendation.aggregate([
-      { $match: { user_id: user_id, status: { $in: ["Pending", "Executed"] } } },
+      { $match: { user_id: userObjectId, status: { $in: ["Pending", "Executed"] } } },
         { 
             $group: {
                 _id: null,
@@ -80,8 +89,8 @@ export const computeMetrics = async (user_id, targetDate = new Date()) => {
       recRate = (rStats.total_recovered / rStats.potential_recovery) * 100;
     }
 
-    const metric = new DashboardMetric({
-      user_id: user_id,
+    const metricData = {
+      user_id: userObjectId,
       date_snapshot: endDate,
       total_transactions: tStats.total_transactions,
       total_spend: parseFloat(tStats.total_spend.toFixed(2)),
@@ -89,13 +98,21 @@ export const computeMetrics = async (user_id, targetDate = new Date()) => {
       anomalies_high_risk: aStats.total_high_risk,
       recommendations_open: rStats.open_count,
       total_recovered: parseFloat(rStats.total_recovered.toFixed(2)),
+      recovery_potential: parseFloat((rStats.potential_recovery || 0).toFixed(2)),
       recovery_rate: parseFloat(recRate.toFixed(2)),
       top_leakage_type: "Various",
       top_vendor: vendorStats.length > 0 ? vendorStats[0]._id : "None",
       top_department: deptStats.length > 0 ? deptStats[0]._id : "None"
-    });
+    };
 
-    const savedMetric = await metric.save();
+    const savedMetric = await DashboardMetric.findOneAndUpdate(
+      {
+        user_id: userObjectId,
+        date_snapshot: { $gte: startDate, $lte: endDate }
+      },
+      { $set: metricData },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
     return savedMetric;
 
   } catch (error) {
