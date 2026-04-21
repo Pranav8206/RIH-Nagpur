@@ -27,6 +27,7 @@ export default function AnomaliesListPage() {
             params.append('limit', '20');
             if (currentFilters.status) params.append('status', currentFilters.status);
             if (currentFilters.severity) params.append('severity', currentFilters.severity);
+            if (currentFilters.vendor?.trim()) params.append('vendor', currentFilters.vendor.trim());
 
             const { data } = await axiosInstance.get(`/anomalies?${params.toString()}`);
             return data;

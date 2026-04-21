@@ -165,7 +165,7 @@ export const getAnomalies = async (req, res) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized", error: "Missing user ID context" });
 
-    const { status, severity, page = 1, limit = 20 } = req.query;
+    const { status, severity, vendor, page = 1, limit = 20 } = req.query;
     const pageNum = parseInt(page, 10);
     const limitNum = parseInt(limit, 10);
 
@@ -173,7 +173,18 @@ export const getAnomalies = async (req, res) => {
     if (status) query.status = status;
     if (severity) query.severity = severity;
 
-    if (!status && !severity && pageNum === 1) {
+    if (vendor?.trim()) {
+      const vendorRegex = new RegExp(vendor.trim(), "i");
+      const vendorTransactions = await Transaction.find({
+        user_id: userId,
+        vendor_name: { $regex: vendorRegex }
+      }).select("_id").lean();
+
+      const vendorTransactionIds = vendorTransactions.map((trx) => trx._id);
+      query.transaction_id = { $in: vendorTransactionIds };
+    }
+
+    if (!status && !severity && !vendor?.trim() && pageNum === 1) {
       await syncMissingAnomaliesForUser(userId);
     }
 
