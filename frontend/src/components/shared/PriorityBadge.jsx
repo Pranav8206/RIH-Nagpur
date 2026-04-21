@@ -3,7 +3,7 @@ import React from 'react';
 export default function PriorityBadge({ level }) {
     if (!level) return null;
     
-    const normalized = level.toLowerCase();
+    const normalized = level;
     
     let colorClass, dotColor;
     if (normalized === 'high' || normalized === 'critical') {

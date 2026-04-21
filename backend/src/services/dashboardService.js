@@ -1,7 +1,6 @@
 import { DashboardMetric } from "../models/dashboardMetric.model.js";
 import { Transaction } from "../models/transaction.model.js";
 import { Anomaly } from "../models/anomaly.model.js";
-import { Classification } from "../models/classification.model.js";
 import { Recommendation } from "../models/recommendation.model.js";
 
 /**
@@ -57,12 +56,9 @@ export const computeMetrics = async (user_id, targetDate = new Date()) => {
       }
     ]);
 
-    // 3. Classifications (Assuming simple count tracking internally to avoid nesting limits)
-    const classifiedAnomalies = await Classification.countDocuments({ classification_date: { $lte: endDate } });
-    
-    // 4. Recommendations tracking
+    // 3. Recommendations tracking
     const recStats = await Recommendation.aggregate([
-        { $match: { user_id: user_id, status: { $in: ["Pending", "Executed"] } } },
+      { $match: { user_id: user_id, status: { $in: ["Pending", "Executed"] } } },
         { 
             $group: {
                 _id: null,
@@ -91,7 +87,6 @@ export const computeMetrics = async (user_id, targetDate = new Date()) => {
       total_spend: parseFloat(tStats.total_spend.toFixed(2)),
       anomalies_detected: aStats.total_anomalies,
       anomalies_high_risk: aStats.total_high_risk,
-      classified_anomalies: classifiedAnomalies,
       recommendations_open: rStats.open_count,
       total_recovered: parseFloat(rStats.total_recovered.toFixed(2)),
       recovery_rate: parseFloat(recRate.toFixed(2)),

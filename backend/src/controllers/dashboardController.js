@@ -43,7 +43,6 @@ export const getMetrics = async (req, res) => {
         total_spend: metric.total_spend || 0,
         anomalies_detected: metric.anomalies_detected || 0,
         anomalies_high_risk: metric.anomalies_high_risk || 0,
-        classified_anomalies: metric.classified_anomalies || 0,
         recommendations_open: metric.recommendations_open || 0,
         total_recovered: metric.total_recovered || 0,
         recovery_rate: metric.recovery_rate || 0,
@@ -140,25 +139,16 @@ export const getTopAnomalies = async (req, res) => {
       { $unwind: "$transaction" },
       { 
           $lookup: {
-            from: "classifications",
+            from: "recommendations",
             localField: "_id",
             foreignField: "anomaly_id",
-            as: "classification"
-          }
-      },
-      { $unwind: { path: "$classification", preserveNullAndEmptyArrays: true } },
-      { 
-          $lookup: {
-            from: "recommendations",
-            localField: "classification._id",
-            foreignField: "classification_id",
             as: "recommendation"
           }
       },
       { $unwind: { path: "$recommendation", preserveNullAndEmptyArrays: true } },
       {
           $addFields: {
-              recovery_potential: { $ifNull: ["$recommendation.estimated_recovery", { $ifNull: ["$classification.estimated_recovery", 0] }] },
+              recovery_potential: { $ifNull: ["$recommendation.estimated_recovery", 0] },
               severity_weight: {
                  $switch: {
                     branches: [
@@ -206,10 +196,10 @@ export const getByDepartment = async (req, res) => {
       },
       {
           $lookup: {
-              from: "classifications",
-              localField: "anomalies_arr._id",
-              foreignField: "anomaly_id",
-              as: "classifications_arr"
+            from: "recommendations",
+            localField: "anomalies_arr._id",
+            foreignField: "anomaly_id",
+            as: "recommendations_arr"
           }
       },
       {
@@ -217,7 +207,7 @@ export const getByDepartment = async (req, res) => {
               _id: "$department",
               total_spend: { $sum: "$amount" },
               anomalies_detected: { $sum: { $size: "$anomalies_arr" } },
-              recovery_potential: { $sum: { $sum: "$classifications_arr.estimated_recovery" } } 
+            recovery_potential: { $sum: { $sum: "$recommendations_arr.estimated_recovery" } } 
           }
       },
       {
@@ -264,10 +254,10 @@ export const getByVendor = async (req, res) => {
       },
       {
           $lookup: {
-              from: "classifications",
-              localField: "anomalies_arr._id",
-              foreignField: "anomaly_id",
-              as: "classifications_arr"
+            from: "recommendations",
+            localField: "anomalies_arr._id",
+            foreignField: "anomaly_id",
+            as: "recommendations_arr"
           }
       },
       {
@@ -276,7 +266,7 @@ export const getByVendor = async (req, res) => {
               transaction_count: { $sum: 1 },
               total_spend: { $sum: "$amount" },
               anomalies: { $sum: { $size: "$anomalies_arr" } },
-              recovery_potential: { $sum: { $sum: "$classifications_arr.estimated_recovery" } } 
+            recovery_potential: { $sum: { $sum: "$recommendations_arr.estimated_recovery" } } 
           }
       },
       {

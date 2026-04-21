@@ -1,9 +1,8 @@
 import Joi from "joi";
 import { Transaction } from "../models/transaction.model.js";
 import { Anomaly } from "../models/anomaly.model.js";
-import { Classification } from "../models/classification.model.js";
 import { Recommendation } from "../models/recommendation.model.js";
-import { detectAnomalies } from "../services/anomalyService.js";
+import { syncMissingAnomaliesForUser } from "../services/anomalyService.js";
 import { logAction } from "../services/auditService.js";
 
 // Joi Schemas
@@ -17,18 +16,9 @@ export const detectAnomaliesFlow = async (req, res) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized", error: "Missing user ID context" });
 
-    // Step 1: Find all transactions that ALREADY have anomalies to prevent duplicate runs
-    const existingAnomalies = await Anomaly.find({ user_id: userId }).select('transaction_id').lean();
-    const existingTrxIds = existingAnomalies.map(a => a.transaction_id);
+    const syncResult = await syncMissingAnomaliesForUser(userId);
 
-    // Step 2: Query for UNPROCESSED transactions securely avoiding duplicates natively
-    const unprocessedTransactions = await Transaction.find({
-      user_id: userId,
-      _id: { $nin: existingTrxIds },
-      is_deleted: { $ne: true }
-    }).lean();
-
-    if (unprocessedTransactions.length === 0) {
+    if (syncResult.detected === 0) {
       return res.status(200).json({
         success: true,
         detected: 0,
@@ -38,19 +28,15 @@ export const detectAnomaliesFlow = async (req, res) => {
       });
     }
 
-    // Step 3: Run detection engine via Service Layer
-    const createdAnomalies = await detectAnomalies(unprocessedTransactions);
+    const total_risk = syncResult.anomalies.reduce((sum, anomaly) => sum + anomaly.anomaly_score, 0);
 
-    // Calculate aggregated return data metric
-    const total_risk = createdAnomalies.reduce((sum, anomaly) => sum + anomaly.anomaly_score, 0);
-
-    await logAction(userId, "detected", "anomaly_batch", null, { change_to: `Detected ${createdAnomalies.length} new anomalies.` }, "User ran anomaly detection");
+    await logAction(userId, "detected", "anomaly_batch", null, { change_to: `Detected ${syncResult.created} new anomalies.` }, "User ran anomaly detection");
 
     return res.status(201).json({
       success: true,
       data: {
-        detected: unprocessedTransactions.length,
-        created: createdAnomalies.length,
+        detected: syncResult.detected,
+        created: syncResult.created,
         total_risk_score: parseFloat(total_risk.toFixed(2))
       }
     });
@@ -74,7 +60,12 @@ export const getAnomalies = async (req, res) => {
     if (status) query.status = status;
     if (severity) query.severity = severity;
 
+    if (!status && !severity && pageNum === 1) {
+      await syncMissingAnomaliesForUser(userId);
+    }
+
     const total = await Anomaly.countDocuments(query);
+
     const anomalies = await Anomaly.find(query)
       .sort({ detected_at: -1 })
       .skip((pageNum - 1) * limitNum)
@@ -121,20 +112,13 @@ export const getAnomalyById = async (req, res) => {
 
     // Fetch related dependencies via lightweight independent mappings
     const transaction = await Transaction.findById(anomaly.transaction_id).lean();
-    const classifications = await Classification.find({ anomaly_id: anomaly._id }).lean();
-    
-    let recommendations = [];
-    if (classifications.length > 0) {
-        const classificationIds = classifications.map(c => c._id);
-        recommendations = await Recommendation.find({ classification_id: { $in: classificationIds } }).lean();
-    }
+    const recommendations = await Recommendation.find({ anomaly_id: anomaly._id }).lean();
 
     return res.status(200).json({
       success: true,
       data: {
         anomaly,
         transaction,
-        classifications,
         recommendations
       }
     });

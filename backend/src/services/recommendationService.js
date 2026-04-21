@@ -1,67 +1,45 @@
 import { Recommendation } from "../models/recommendation.model.js";
-
-// Template configurations handling the text outputs mapping logic
-const ACTION_TEMPLATES = {
-  "Duplicate": {
-    action: "Request immediate refund for duplicate invoice",
-    email: "Subject: Urgent: Duplicate Invoice Payment Refund Request\n\nDear Billing Dept,\nPlease refund the duplicate charge..."
-  },
-  "Vendor Overpayment": {
-    action: "Initiate vendor negotiation / price correction",
-    email: "Subject: Price discrepancy review\n\nCan we schedule a call to review the recent invoice markup?"
-  },
-  "Idle Subscription": {
-    action: "Cancel subscription immediately from portal",
-    email: "Subject: Immediate Account Cancellation\n\nPlease close this account and halt auto-renewal."
-  },
-  "Fraud": {
-    action: "Escalate to Legal & Security team",
-    email: "Subject: SECURITY ALERT: Potential Fraudulent Activity detected on Corporate Card"
-  },
-  "Unauthorized": {
-    action: "Issue compliance internal warning to employee",
-    email: "Subject: Policy Violation: Use of unapproved vendor\n\nPlease migrate your tools to our approved list."
-  },
-  "Budget Creep": {
-    action: "Schedule budgeting review meeting with department head",
-    email: "Subject: Q3 Budget creep detected\n\nWe noticed a variance in standard spend. Let's align on forecasts."
-  }
-};
+import { Anomaly } from "../models/anomaly.model.js";
+import { Transaction } from "../models/transaction.model.js";
 
 /**
  * Automates creation of recommended mitigation strategies
- * @param {Object} classification The finalized classification doc
+ * @param {Object} anomaly The finalized anomaly doc
  * @returns {Promise<Array<Object>>} Inserted recommendation objects
  */
-export const generateRecommendations = async (classification) => {
+export const generateRecommendations = async (anomaly) => {
   try {
-    const leakageType = classification.leakage_type;
-    const template = ACTION_TEMPLATES[leakageType] || ACTION_TEMPLATES["Fraud"];
+    const transaction = anomaly.transaction_id && anomaly.transaction_id.vendor_name
+      ? anomaly.transaction_id
+      : await Transaction.findById(anomaly.transaction_id).lean();
+
+    if (!transaction) throw new Error("Transaction not found for anomaly.");
+
+    const reason = `${anomaly.detection_method || "Anomaly"} - ${anomaly.reason_description || "Review required."}`;
+    const leakageType = anomaly.severity === "High" ? "Fraud" : anomaly.detection_method?.includes("Duplicate") ? "Duplicate" : "Vendor Overpayment";
+    const actionDescription = anomaly.severity === "High"
+      ? "Escalate to finance and security review immediately"
+      : anomaly.detection_method?.includes("Duplicate")
+        ? "Validate invoice duplication and request vendor refund"
+        : "Review transaction and negotiate recovery with vendor";
     
     // Calculates priority logarithmically leaning based on raw recovery cash pool
     let priorityVal = 3;
-    if (classification.estimated_recovery > 50000) priorityVal = 5;
-    else if (classification.estimated_recovery > 10000) priorityVal = 4;
-    else if (classification.estimated_recovery < 1000) priorityVal = 2;
+    if (anomaly.anomaly_score > 0.9) priorityVal = 5;
+    else if (anomaly.anomaly_score > 0.75) priorityVal = 4;
+    else if (anomaly.anomaly_score < 0.6) priorityVal = 2;
 
     const rec = new Recommendation({
-        user_id: classification.user_id, // Handled implicitly via parent below
-        classification_id: classification._id,
+      user_id: anomaly.user_id,
+      anomaly_id: anomaly._id,
         recommendation_type: "Remediation Action",
-        action_template: leakageType,
-        estimated_recovery: classification.estimated_recovery,
+      action_template: leakageType,
+      estimated_recovery: Math.round((transaction.amount || 0) * 0.3),
         priority: priorityVal,
         status: "Pending", // Ensures Virtual `isActionable` remains True
-        action_description: template.action,
-        template_email: template.email
+      action_description: actionDescription,
+      template_email: `Subject: Review required for ${transaction.vendor_name}\n\n${reason}`
     });
-
-    // To ensure strict schema validations if `user_id` wasn't mapped through from classification to rec
-    if (!rec.user_id) {
-        const { Anomaly } = await import("../models/anomaly.model.js");
-        const linkedAnomaly = await Anomaly.findById(classification.anomaly_id).lean();
-        if (linkedAnomaly) rec.user_id = linkedAnomaly.user_id;
-    }
 
     const savedRec = await rec.save();
     return [savedRec]; // Return as an array according to requirements

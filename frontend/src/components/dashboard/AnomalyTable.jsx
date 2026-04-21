@@ -36,13 +36,13 @@ export default function AnomalyTable({ data = [], isLoading }) {
         </span>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse min-w-[700px]">
+        <table className="w-full text-left border-collapse min-w-175">
           <thead>
             <tr className="bg-surface-hover text-text-tertiary text-xs uppercase tracking-wider">
               <th className="px-6 py-4 font-medium border-b border-border-light">Vendor Identity</th>
               <th className="px-6 py-4 font-medium border-b border-border-light">Transaction</th>
               <th className="px-6 py-4 font-medium border-b border-border-light">Severity</th>
-              <th className="px-6 py-4 font-medium border-b border-border-light">AI Classification</th>
+              <th className="px-6 py-4 font-medium border-b border-border-light">Recommendation</th>
               <th className="px-6 py-4 font-medium border-b border-border-light text-right">Recovery $</th>
               <th className="px-6 py-4 font-medium border-b border-border-light text-center">Execute Mapping</th>
             </tr>
@@ -59,7 +59,7 @@ export default function AnomalyTable({ data = [], isLoading }) {
                    </td>
                    <td className="px-6 py-4 text-text-secondary font-semibold">{formatCurrency(row.transaction?.amount)}</td>
                    <td className="px-6 py-4">{getSeverityBadge(row.anomaly?.severity || 'Low')}</td>
-                   <td className="px-6 py-4 text-sm font-medium text-text-secondary w-48 truncate">{row.classification?.leakage_type || 'Unclassified Pattern'}</td>
+                   <td className="px-6 py-4 text-sm font-medium text-text-secondary w-48 truncate">{row.recommendation?.action_description || row.detection_method || 'Review Required'}</td>
                    <td className="px-6 py-4 text-right font-bold text-primary-accent border-l border-gray-50/50">{formatCurrency(row.recovery_potential)}</td>
                    <td className="px-6 py-4 text-center border-l border-gray-50/50">
                       <div className="flex items-center justify-center space-x-2">
@@ -67,13 +67,13 @@ export default function AnomalyTable({ data = [], isLoading }) {
                           <button className="flex items-center text-xs font-semibold bg-primary-accent-light/30 text-primary-accent-dark px-3 py-1.5 rounded-lg border border-primary-accent-light hover:bg-emerald-100 transition shadow-sm w-full justify-center">
                             <CheckCircle className="w-3.5 h-3.5 mr-1" /> Verify
                           </button>
-                        ) : row.classification ? (
+                        ) : row.anomaly ? (
                            <button className="text-xs font-medium text-white bg-primary-accent px-3 py-1.5 rounded-lg hover:bg-blue-700 transition shadow-sm w-full">
                              Build Action
                            </button>
                         ) : (
                           <button className="text-xs font-medium text-text-secondary bg-surface px-3 py-1.5 rounded-lg hover:bg-gray-50 transition border border-gray-300 shadow-sm w-full">
-                            Classify
+                            Review
                           </button>
                         )}
                       </div>

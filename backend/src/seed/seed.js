@@ -3,7 +3,6 @@ import dotenv from "dotenv";
 import { User } from "../models/user.model.js";
 import { Transaction } from "../models/transaction.model.js";
 import { Anomaly } from "../models/anomaly.model.js";
-import { Classification } from "../models/classification.model.js";
 import { Recommendation } from "../models/recommendation.model.js";
 import { Prediction } from "../models/prediction.model.js";
 import { DashboardMetric } from "../models/dashboardMetric.model.js";
@@ -72,7 +71,6 @@ const seedDatabase = async () => {
     console.log("Cleaning database...");
     await Transaction.deleteMany({});
     await Anomaly.deleteMany({});
-    await Classification.deleteMany({});
     await Recommendation.deleteMany({});
     await Prediction.deleteMany({});
     await DashboardMetric.deleteMany({});
@@ -200,38 +198,17 @@ const seedDatabase = async () => {
 
     const createdAnomalies = await Anomaly.insertMany(anomaliesToCreate);
 
-    console.log("Generating Classifications...");
-    const classificationsToCreate = createdAnomalies.map(anomaly => {
-        let leakage = "Budget Creep";
-        if(anomaly.detection_type === "Duplicate Detection") leakage = "Duplicate";
-        else if(anomaly.detection_type === "Unauthorized") leakage = "Unauthorized";
-        else if(anomaly.detection_type === "Idle Subscription") leakage = "Idle Subscription";
-
-        return {
-            anomaly_id: anomaly._id,
-            leakage_type: leakage,
-            confidence_score: 0.88,
-            root_cause: "Human Error / Lack of Oversight",
-            key_indicators: { flagged_by: "System Rules", timestamp: Date.now() },
-            recommended_action: "Review and block vendor",
-            estimated_recovery: generateRandomAmount(5000, 20000),
-            impact_level: anomaly.severity
-        };
-    });
-
-    const createdClassifications = await Classification.insertMany(classificationsToCreate);
-
     console.log("Generating Recommendations...");
-    const recommendationsToCreate = createdClassifications.map(classification => {
+    const recommendationsToCreate = createdAnomalies.map(anomaly => {
         return {
             user_id: userId,
-            classification_id: classification._id,
+            anomaly_id: anomaly._id,
             recommendation_type: "Action",
             action_template: "Auto-Cancel Service",
-            estimated_recovery: classification.estimated_recovery,
-            priority: classification.impact_level === "High" ? 5 : 3,
+            estimated_recovery: generateRandomAmount(5000, 20000),
+            priority: anomaly.severity === "High" ? 5 : 3,
             status: "Pending",
-            action_description: classification.recommended_action
+            action_description: "Review anomaly and recover spend from vendor"
         };
     });
 
@@ -246,7 +223,6 @@ const seedDatabase = async () => {
             total_spend: createdTransactions.reduce((acc, curr) => acc + curr.amount, 0),
             anomalies_detected: createdAnomalies.length,
             anomalies_high_risk: createdAnomalies.filter(a => a.severity === "High").length,
-            classified_anomalies: createdClassifications.length,
             recommendations_open: recommendationsToCreate.length,
             total_recovered: 0,
             recovery_rate: 0,
@@ -261,7 +237,6 @@ const seedDatabase = async () => {
             total_spend: 550000,
             anomalies_detected: 8,
             anomalies_high_risk: 1,
-            classified_anomalies: 8,
             recommendations_open: 5,
             total_recovered: 15000,
             recovery_rate: 15, // Percent

@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   ShieldAlert,
-  Tags,
   Lightbulb,
   CalendarDays,
   Settings,
@@ -38,7 +37,6 @@ const Sidebar = () => {
     { name: "Import", href: "/import", icon: UploadCloud },
     { name: "Calendar", href: "/transactions", icon: CalendarDays },
     { name: "Anomalies", href: "/anomalies", icon: ShieldAlert },
-    { name: "Classifications", href: "/classifications", icon: Tags },
     { name: "Recommend", href: "/recommendations", icon: Lightbulb },
   ];
 
@@ -70,7 +68,7 @@ const Sidebar = () => {
                 }`}
                 title={item.name}
               >
-                <item.icon className="w-[22px] h-[22px]" strokeWidth={1.5} />
+                <item.icon className="w-5.5 h-5.5" strokeWidth={1.5} />
                 <span className="text-[10px] sm:text-[9px] font-medium text-center leading-tight tracking-wide">
                   {item.name}
                 </span>
@@ -84,7 +82,7 @@ const Sidebar = () => {
             className="flex flex-col items-center justify-center py-3 rounded-xl text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
             title="Settings"
           >
-            <Settings className="w-6 h-6 mb-1" strokeWidth={1.5} />
+            <Settings className="w-5.5 h-5.5 mb-1" strokeWidth={1.5} />
             <span className="text-[10px] font-medium">Settings</span>
           </button>
           <button
@@ -92,7 +90,7 @@ const Sidebar = () => {
             className="flex flex-col items-center justify-center py-3 rounded-xl text-error hover:bg-red-50 transition-colors"
             title="Logout"
           >
-            <LogOut className="w-6 h-6 mb-1" strokeWidth={1.5} />
+            <LogOut className="w-5.5 h-5.5 mb-1" strokeWidth={1.5} />
             <span className="text-[10px] font-medium">Log out</span>
           </button>
         </div>
@@ -156,7 +154,7 @@ const Sidebar = () => {
                     : "text-text-secondary hover:bg-surface-hover hover:text-text-primary font-medium"
                 }`}
               >
-                <item.icon className="w-[18px] h-[18px]" strokeWidth={2} />
+                <item.icon className="w-4.5 h-4.5" strokeWidth={2} />
                 <span className="text-sm">{item.name}</span>
               </Link>
             );
@@ -165,7 +163,7 @@ const Sidebar = () => {
 
         <div className="p-4 border-t border-border-light space-y-1">
           <button className="flex w-full items-center space-x-3 px-4 py-3 rounded-xl font-medium text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors text-sm">
-            <Settings className="w-[18px] h-[18px]" />
+            <Settings className="w-4.5 h-4.5" />
             <span>Settings</span>
           </button>
           <button
@@ -175,7 +173,7 @@ const Sidebar = () => {
             }}
             className="flex w-full items-center space-x-3 px-4 py-3 rounded-xl font-medium text-error hover:bg-red-50 transition-colors text-sm"
           >
-            <LogOut className="w-[18px] h-[18px]" />
+            <LogOut className="w-4.5 h-4.5" />
             <span>Log out</span>
           </button>
         </div>

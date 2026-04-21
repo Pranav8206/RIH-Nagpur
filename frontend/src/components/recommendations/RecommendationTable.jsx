@@ -1,68 +1,82 @@
 "use client";
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, ShieldCheck } from 'lucide-react';
+import { ArrowRight, CircleDollarSign, Sparkles } from 'lucide-react';
 import LoadingSkeleton from '../shared/LoadingSkeleton';
 import EmptyState from '../shared/EmptyState';
-import PriorityBadge from '../shared/PriorityBadge';
-import StatusBadge from '../shared/StatusBadge';
 
 export default function RecommendationTable({ data = [], isLoading }) {
   const router = useRouter();
 
-  if (isLoading) return <LoadingSkeleton type="table" rows={8} />;
+  if (isLoading) return <LoadingSkeleton type="card" rows={4} />;
   
   if (!data || data.length === 0) {
-      return <EmptyState message="No execution nodes isolated or matching structure bounds natively." icon={ShieldCheck} />;
+      return <EmptyState message="No recommendations found." icon={Sparkles} />;
   }
 
   const formatCurrency = (amt) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'INR' }).format(amt || 0);
+  const getImpactLabel = (priority) => {
+    if (priority >= 5) return 'High Impact';
+    if (priority >= 3) return 'Medium Impact';
+    return 'Low Impact';
+  };
+
+  const getImpactTone = (priority) => {
+    if (priority >= 5) return 'bg-[#efe0d1] text-[#7a5c3b]';
+    if (priority >= 3) return 'bg-[#e4eadf] text-[#6e7f67]';
+    return 'bg-[#ece8ef] text-[#76697a]';
+  };
 
   return (
-    <div className="overflow-x-auto flex-1 min-h-[500px]">
-        <table className="w-full text-left border-collapse text-sm">
-          <thead>
-            <tr className="bg-surface text-text-tertiary text-xs uppercase tracking-widest relative border-b border-border-light shadow-[0_1px_2px_rgba(0,0,0,0.03)] font-bold">
-              <th className="px-5 py-4 whitespace-nowrap hidden lg:table-cell">Template Ref</th>
-              <th className="px-5 py-4">Executable Action Template Limit</th>
-              <th className="px-5 py-4 text-center">Node Vector</th>
-              <th className="px-5 py-4 hidden md:table-cell text-center">Status Lock</th>
-              <th className="px-5 py-4 text-right">Yield Capacity $</th>
-              <th className="px-5 py-4 text-right">View Object</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50 bg-surface">
-               {data.map((row) => (
-                 <tr 
-                   key={row._id} 
-                   className="transition-all cursor-pointer border-l-2 hover:bg-emerald-50/40 border-l-transparent hover:border-l-emerald-400"
-                   onClick={() => router.push(`/recommendations/${row._id}`)}
-                 >
-                   <td className="px-5 py-3.5 text-xs font-mono text-text-tertiary tracking-wider font-semibold hidden lg:table-cell">
-                       #{row._id.slice(-6).toUpperCase()}
-                   </td>
-                   <td className="px-5 py-3.5">
-                       <div className="font-bold text-text-primary truncate max-w-[300px] mb-0.5">{row.action_description || 'Auto-Resolution Model'}</div>
-                       <div className="text-[11px] text-text-tertiary font-bold uppercase tracking-widest">{row.action_type || 'Internal Extraction'}</div>
-                   </td>
-                   <td className="px-5 py-3.5 text-center">
-                       <PriorityBadge level={row.priority} />
-                   </td>
-                   <td className="px-5 py-3.5 text-center hidden md:table-cell">
-                       <StatusBadge status={row.status} />
-                   </td>
-                   <td className="px-5 py-3.5 text-right font-bold text-primary-accent whitespace-nowrap tracking-tight font-mono text-[15px]">
-                       {formatCurrency(row.estimated_recovery)}
-                   </td>
-                   <td className="px-5 py-3.5 text-right">
-                       <button className="p-1.5 text-text-tertiary hover:text-emerald-600 hover:bg-white rounded-lg transition-all border border-transparent hover:border-emerald-200 hover:shadow-sm">
-                           <Eye className="w-4 h-4" />
-                       </button>
-                   </td>
-                 </tr>
-               ))}
-          </tbody>
-        </table>
+    <div className="p-4 sm:p-5 space-y-3 bg-[#fbfaf8]">
+        {data.map((row) => {
+          const summary = row.anomaly_summary || {};
+          const supportingText = row.friendly_summary || summary.reason_description || summary.detection_method || 'Review this recommendation';
+          const impactLabel = getImpactLabel(row.priority || 0);
+
+          return (
+            <div
+              key={row._id}
+              onClick={() => router.push(`/recommendations/${row._id}`)}
+              className="group cursor-pointer rounded-2xl border border-slate-200 bg-[#fdfbf8] px-4 py-4 shadow-[0_1px_1px_rgba(15,23,42,0.03)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_30px_rgba(15,23,42,0.08)] sm:px-5"
+            >
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex gap-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e6ded1] text-[#7c6a51]">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-lg font-medium text-slate-800">
+                        {row.friendly_title || row.action_description || 'Review recommendation'}
+                      </h3>
+                      <span className={`rounded-full px-3 py-1 text-xs font-medium ${getImpactTone(row.priority || 0)}`}>
+                        {impactLabel}
+                      </span>
+                    </div>
+                    <p className="max-w-2xl text-sm leading-6 text-slate-500">
+                      {supportingText}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-slate-500">
+                      <span className="inline-flex items-center gap-2 font-medium text-slate-700">
+                        <CircleDollarSign className="h-4 w-4 text-[#7a8c72]" />
+                        Save {formatCurrency(row.estimated_recovery)} /month
+                      </span>
+                      <span>Status: {row.status || 'Pending'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 sm:flex-col sm:items-end">
+                  <button className="inline-flex items-center gap-2 rounded-full bg-[#7a8c72] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition group-hover:bg-[#6b7d63]">
+                    Fix
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
     </div>
   );
 }

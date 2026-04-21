@@ -1,8 +1,9 @@
 import Joi from "joi";
 import { Transaction } from "../models/transaction.model.js";
 import { Anomaly } from "../models/anomaly.model.js";
-import { Classification } from "../models/classification.model.js";
+import { Recommendation } from "../models/recommendation.model.js";
 import { logAction } from "../services/auditService.js";
+import { syncMissingAnomaliesForUser } from "../services/anomalyService.js";
 
 // Joi Schemas
 export const createTransactionSchema = Joi.object({
@@ -51,6 +52,12 @@ export const createTransaction = async (req, res) => {
     const savedTransaction = await transaction.save();
 
     await logAction(userId, "created", "transaction", savedTransaction._id, { change_to: savedTransaction }, "User created new transaction");
+
+    try {
+      await syncMissingAnomaliesForUser(userId);
+    } catch (syncError) {
+      console.warn("Auto anomaly sync failed after transaction create:", syncError.message);
+    }
 
     return res.status(201).json({
         success: true,
@@ -123,18 +130,17 @@ export const getTransactionById = async (req, res) => {
 
     const relatedAnomalies = await Anomaly.find({ transaction_id: transaction._id }).lean();
     
-    let relatedClassifications = [];
-    if (relatedAnomalies.length > 0) {
-        const anomalyIds = relatedAnomalies.map(a => a._id);
-        relatedClassifications = await Classification.find({ anomaly_id: { $in: anomalyIds } }).lean();
-    }
+    const anomalyIds = relatedAnomalies.map(a => a._id);
+    const relatedRecommendations = anomalyIds.length > 0
+      ? await Recommendation.find({ anomaly_id: { $in: anomalyIds } }).lean()
+      : [];
 
     return res.status(200).json({
         success: true,
         data: {
              ...transaction,
              anomalies: relatedAnomalies,
-             classifications: relatedClassifications
+         recommendations: relatedRecommendations
         }
     });
 

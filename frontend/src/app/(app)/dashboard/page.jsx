@@ -85,13 +85,13 @@ export default function DashboardPage() {
     }
   };
 
-  const handleRunClassification = async () => {
+  const handleGenerateRecommendations = async () => {
     setProcessing(true);
     try {
-      await axiosInstance.post("/classifications/classify", {});
+      await axiosInstance.post("/recommendations/generate", {});
       await fetchDashboardData();
     } catch (err) {
-      alert("Classification taxonomy matrix failed.");
+      alert("Recommendation generation failed.");
     } finally {
       setProcessing(false);
     }
@@ -99,7 +99,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-transparent text-text-primary pb-12 font-sans selection:bg-primary-accent-light/50">
-      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 pt-6 max-w-400 mx-auto mb-2">
+      <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 pt-6 max-w-screen-2xl mx-auto mb-2">
         <h2 className="text-2xl font-bold text-text-primary">
           Dashboard Overview
         </h2>
@@ -120,7 +120,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <main className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         {/* Global Error Handle */}
         {error && (
           <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-xl flex items-start text-error shadow-sm animate-in fade-in slide-in-from-top-4">
@@ -181,7 +181,7 @@ export default function DashboardPage() {
           <div className="lg:col-span-3">
             <SidebarActions
               onRunDetection={handleRunDetection}
-              onRunClassification={handleRunClassification}
+              onGenerateRecommendations={handleGenerateRecommendations}
               isProcessing={processing}
             />
           </div>

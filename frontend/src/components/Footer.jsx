@@ -15,7 +15,7 @@ import Image from "next/image";
 const Footer = () => {
   const pathname = usePathname();
   if (
-    pathname?.match(/^\/(dashboard|anomalies|classifications|recommendations)/)
+    pathname?.match(/^\/(dashboard|anomalies|recommendations)/)
   )
     return null;
 
