@@ -31,7 +31,7 @@ export default function RecommendationTable({ data = [], isLoading }) {
     <div className="p-4 sm:p-5 space-y-3 bg-[#fbfaf8]">
         {data.map((row) => {
           const summary = row.anomaly_summary || {};
-          const supportingText = summary.reason_description || summary.detection_method || row.action_type || 'Review this recommendation';
+          const supportingText = row.friendly_summary || summary.reason_description || summary.detection_method || 'Review this recommendation';
           const impactLabel = getImpactLabel(row.priority || 0);
 
           return (
@@ -48,7 +48,7 @@ export default function RecommendationTable({ data = [], isLoading }) {
                   <div className="space-y-2">
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-lg font-medium text-slate-800">
-                        {row.action_description || 'Review recommendation'}
+                        {row.friendly_title || row.action_description || 'Review recommendation'}
                       </h3>
                       <span className={`rounded-full px-3 py-1 text-xs font-medium ${getImpactTone(row.priority || 0)}`}>
                         {impactLabel}

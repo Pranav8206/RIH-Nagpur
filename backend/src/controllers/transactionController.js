@@ -3,6 +3,7 @@ import { Transaction } from "../models/transaction.model.js";
 import { Anomaly } from "../models/anomaly.model.js";
 import { Recommendation } from "../models/recommendation.model.js";
 import { logAction } from "../services/auditService.js";
+import { syncMissingAnomaliesForUser } from "../services/anomalyService.js";
 
 // Joi Schemas
 export const createTransactionSchema = Joi.object({
@@ -51,6 +52,12 @@ export const createTransaction = async (req, res) => {
     const savedTransaction = await transaction.save();
 
     await logAction(userId, "created", "transaction", savedTransaction._id, { change_to: savedTransaction }, "User created new transaction");
+
+    try {
+      await syncMissingAnomaliesForUser(userId);
+    } catch (syncError) {
+      console.warn("Auto anomaly sync failed after transaction create:", syncError.message);
+    }
 
     return res.status(201).json({
         success: true,

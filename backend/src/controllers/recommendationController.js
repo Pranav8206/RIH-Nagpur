@@ -53,6 +53,104 @@ const parseGroqJson = (rawText) => {
   }
 };
 
+const toTitleCase = (value = "") => value
+  .toString()
+  .toLowerCase()
+  .split(" ")
+  .filter(Boolean)
+  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+  .join(" ");
+
+const buildFriendlyFallbackMetadata = (item) => {
+  const vendor = toTitleCase(item.vendor_name || "vendor");
+  const amountText = formatCurrency(item.amount || item.estimated_recovery || 0);
+  const method = (item.detection_method || "").toLowerCase();
+
+  if (method.includes("duplicate")) {
+    return {
+      title: `Check duplicate charge from ${vendor}`,
+      summary: `This looks like a duplicate payment. Review invoice records and request a refund where needed.`
+    };
+  }
+
+  if (method.includes("high") || (item.priority || 0) >= 5) {
+    return {
+      title: `Review unusually high spend at ${vendor}`,
+      summary: `Spending appears higher than normal. Validate the charge and recover excess amount if applicable.`
+    };
+  }
+
+  return {
+    title: `Review ${vendor} transaction for savings`,
+    summary: `A potential saving of about ${amountText} is available. Confirm details and take corrective action.`
+  };
+};
+
+const buildFriendlyMetadataWithGroq = async (items) => {
+  const fallbackMap = new Map(items.map((item) => [
+    String(item.id),
+    buildFriendlyFallbackMetadata(item)
+  ]));
+
+  const model = process.env.GROQ_MODEL;
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!model || !apiKey || items.length === 0) return fallbackMap;
+
+  try {
+    const groqResponse = await fetch(GROQ_CHAT_COMPLETIONS_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        max_tokens: 900,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: "You write friendly finance UX copy. Return strict JSON with key items. Each item must contain id, title, summary. Title must be short, unique, and human-readable. Avoid robotic words."
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              instructions: "For each record, create a clear title and one-sentence summary in simple English.",
+              items
+            })
+          }
+        ]
+      })
+    });
+
+    if (!groqResponse.ok) return fallbackMap;
+
+    const groqJson = await groqResponse.json();
+    const content = groqJson?.choices?.[0]?.message?.content || "";
+    const parsed = parseGroqJson(content);
+    const parsedItems = Array.isArray(parsed?.items) ? parsed.items : [];
+
+    if (parsedItems.length === 0) return fallbackMap;
+
+    const finalMap = new Map(fallbackMap);
+    for (const entry of parsedItems) {
+      const id = String(entry?.id || "");
+      if (!id || !finalMap.has(id)) continue;
+
+      const fallback = finalMap.get(id);
+      finalMap.set(id, {
+        title: typeof entry.title === "string" && entry.title.trim() ? entry.title.trim() : fallback.title,
+        summary: typeof entry.summary === "string" && entry.summary.trim() ? entry.summary.trim() : fallback.summary
+      });
+    }
+
+    return finalMap;
+  } catch {
+    return fallbackMap;
+  }
+};
+
 export const executeRecommendationSchema = Joi.object({
   actual_recovery: Joi.number().min(0).optional(),
   notes: Joi.string().optional()
@@ -130,11 +228,50 @@ export const getRecommendations = async (req, res) => {
     const anomalyIds = recommendations.map((recommendation) => recommendation.anomaly_id).filter(Boolean);
     const relatedAnomalies = anomalyIds.length > 0 ? await Anomaly.find({ _id: { $in: anomalyIds } }).lean() : [];
 
+    const transactionIds = relatedAnomalies.map((anomaly) => anomaly.transaction_id).filter(Boolean);
+    const relatedTransactions = transactionIds.length > 0 ? await Transaction.find({ _id: { $in: transactionIds } }).lean() : [];
+
+    const llmItems = recommendations.map((recommendation) => {
+      const anomaly = relatedAnomalies.find((entry) => entry._id.toString() === recommendation.anomaly_id.toString()) || null;
+      const transaction = anomaly?.transaction_id
+        ? relatedTransactions.find((entry) => entry._id.toString() === anomaly.transaction_id.toString()) || null
+        : null;
+
+      return {
+        id: recommendation._id.toString(),
+        vendor_name: transaction?.vendor_name,
+        category: transaction?.category,
+        amount: transaction?.amount,
+        detection_method: anomaly?.detection_method,
+        reason_description: anomaly?.reason_description,
+        action_description: recommendation.action_description,
+        estimated_recovery: recommendation.estimated_recovery,
+        priority: recommendation.priority
+      };
+    });
+
+    const metadataById = await buildFriendlyMetadataWithGroq(llmItems);
+
     const mappedRecommendations = recommendations.map((recommendation) => {
       const anomaly = relatedAnomalies.find((entry) => entry._id.toString() === recommendation.anomaly_id.toString()) || null;
+      const transaction = anomaly?.transaction_id
+        ? relatedTransactions.find((entry) => entry._id.toString() === anomaly.transaction_id.toString()) || null
+        : null;
+      const friendlyMeta = metadataById.get(recommendation._id.toString()) || buildFriendlyFallbackMetadata({
+        id: recommendation._id.toString(),
+        vendor_name: transaction?.vendor_name,
+        amount: transaction?.amount,
+        detection_method: anomaly?.detection_method,
+        estimated_recovery: recommendation.estimated_recovery,
+        priority: recommendation.priority
+      });
+
       return {
         ...recommendation,
-        anomaly_summary: anomaly
+        anomaly_summary: anomaly,
+        transaction_summary: transaction,
+        friendly_title: friendlyMeta.title,
+        friendly_summary: friendlyMeta.summary
       };
     });
 
@@ -310,10 +447,34 @@ export const getRecommendationById = async (req, res) => {
     const anomaly = await Anomaly.findById(recommendation.anomaly_id).lean();
     const transaction = anomaly?.transaction_id ? await Transaction.findById(anomaly.transaction_id).lean() : null;
 
+    const friendlyMap = await buildFriendlyMetadataWithGroq([
+      {
+        id: recommendation._id.toString(),
+        vendor_name: transaction?.vendor_name,
+        category: transaction?.category,
+        amount: transaction?.amount,
+        detection_method: anomaly?.detection_method,
+        reason_description: anomaly?.reason_description,
+        action_description: recommendation.action_description,
+        estimated_recovery: recommendation.estimated_recovery,
+        priority: recommendation.priority
+      }
+    ]);
+    const friendlyMeta = friendlyMap.get(recommendation._id.toString()) || buildFriendlyFallbackMetadata({
+      id: recommendation._id.toString(),
+      vendor_name: transaction?.vendor_name,
+      amount: transaction?.amount,
+      detection_method: anomaly?.detection_method,
+      estimated_recovery: recommendation.estimated_recovery,
+      priority: recommendation.priority
+    });
+
     return res.status(200).json({
       success: true,
       data: {
         id: recommendation._id,
+        friendly_title: friendlyMeta.title,
+        friendly_summary: friendlyMeta.summary,
         anomaly,
         transaction,
         recommendation_type: recommendation.recommendation_type,

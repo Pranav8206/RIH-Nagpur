@@ -14,6 +14,7 @@ export default function AnomaliesListPage() {
   const [filters, setFilters] = useState({ status: '', severity: '', vendor: '' });
   const [page, setPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState([]);
+    const [syncing, setSyncing] = useState(false);
 
   const { data, isLoading, isError, error, isFetching } = useQuery({
     queryKey: ['anomalies', filters, page],
@@ -53,9 +54,11 @@ export default function AnomaliesListPage() {
   };
 
   const handleSyncAnomalies = async () => {
+      setSyncing(true);
       try {
           await axiosInstance.post('/anomalies/detect', {});
       } finally {
+          setSyncing(false);
           queryClient.invalidateQueries(['anomalies']);
       }
   };
@@ -74,9 +77,9 @@ export default function AnomaliesListPage() {
                 <button 
                                     onClick={handleSyncAnomalies}
                   className="flex items-center text-sm font-medium text-text-secondary bg-surface border border-border-light px-4 py-2 rounded-lg shadow-sm hover:bg-surface-hover transition"
-                  disabled={isFetching}
+                                    disabled={isFetching || syncing}
                 >
-                    <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? 'animate-spin text-primary-accent' : ''}`} /> Sync Database Arrays
+                                        <RefreshCw className={`w-4 h-4 mr-2 ${(isFetching || syncing) ? 'animate-spin text-primary-accent' : ''}`} /> {syncing ? 'Running detection...' : 'Run anomaly detection'}
                 </button>
             </div>
 

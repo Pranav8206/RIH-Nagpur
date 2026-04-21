@@ -4,6 +4,7 @@ import { Transaction } from "../models/transaction.model.js";
 import { AuditLog } from "../models/auditLog.model.js";
 import { readAndParseCSV, validateRow } from "../utils/csvParser.js";
 import { parseRawText } from "../utils/textParser.js";
+import { syncMissingAnomaliesForUser } from "../services/anomalyService.js";
 
 const isObjectIdString = (value) => typeof value === "string" && mongoose.Types.ObjectId.isValid(value);
 
@@ -136,6 +137,12 @@ export const importCSV = async (req, res, next) => {
         reason: `Bulk imported ${insertedCount} transactions`,
         ip_address: req.ip || "0.0.0.0",
       });
+
+      try {
+        await syncMissingAnomaliesForUser(userId);
+      } catch (syncError) {
+        console.warn("Auto anomaly sync failed after CSV import:", syncError.message);
+      }
     }
 
     // Unlink the temporary file

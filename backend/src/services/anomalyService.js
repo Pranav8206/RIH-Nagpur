@@ -1,4 +1,5 @@
 import { Anomaly } from "../models/anomaly.model.js";
+import { Transaction } from "../models/transaction.model.js";
 
 /**
  * Helper to calculate statistical mean and standard deviation
@@ -121,4 +122,32 @@ export const detectAnomalies = async (transactions) => {
     console.error("Error in anomalyService:", error.message);
     throw new Error("Failed to detect and save anomalies");
   }
+};
+
+/**
+ * Detect anomalies for transactions that do not yet have anomaly records.
+ * Returns both scanned and created counts for API feedback.
+ */
+export const syncMissingAnomaliesForUser = async (userId) => {
+  if (!userId) return { detected: 0, created: 0, anomalies: [] };
+
+  const existingAnomalies = await Anomaly.find({ user_id: userId }).select("transaction_id").lean();
+  const existingTransactionIds = existingAnomalies.map((anomaly) => anomaly.transaction_id);
+
+  const unprocessedTransactions = await Transaction.find({
+    user_id: userId,
+    is_deleted: { $ne: true },
+    _id: { $nin: existingTransactionIds }
+  }).lean();
+
+  if (unprocessedTransactions.length === 0) {
+    return { detected: 0, created: 0, anomalies: [] };
+  }
+
+  const createdAnomalies = await detectAnomalies(unprocessedTransactions);
+  return {
+    detected: unprocessedTransactions.length,
+    created: createdAnomalies.length,
+    anomalies: createdAnomalies
+  };
 };

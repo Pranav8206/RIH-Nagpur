@@ -30,6 +30,16 @@ const toDateKey = (value) => {
   return `${year}-${month}-${day}`;
 };
 
+const toAmountNumber = (value) => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value === "string") {
+    const normalized = value.replace(/,/g, "").trim();
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+};
+
 const formatMoney = (value) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -151,7 +161,7 @@ export default function TransactionsCalendarPage() {
       setTransactionsByDate(grouped);
       setAnomalyCountByDate(anomalyDateCounts);
       setAnomalyByTransaction(anomalyMap);
-      setMonthTotal(rows.reduce((sum, trx) => sum + (trx.amount || 0), 0));
+      setMonthTotal(rows.reduce((sum, trx) => sum + toAmountNumber(trx.amount), 0));
       setMonthCount(rows.length);
 
       setUniqueCategories(
@@ -335,10 +345,6 @@ export default function TransactionsCalendarPage() {
             <p className="text-xs uppercase tracking-wide text-text-tertiary">Selected Day</p>
             <p className="text-base font-semibold mt-1">{selectedDateKey || "No date selected"}</p>
           </div>
-          <div className="bg-surface border border-border-light rounded-xl p-4 shadow-sm lg:col-span-3">
-            <p className="text-xs uppercase tracking-wide text-text-tertiary">Flagged Anomalies On Selected Day</p>
-            <p className="text-xl font-bold mt-1">{selectedDayAnomalyCount}</p>
-          </div>
         </div>
 
         {error && (
@@ -365,7 +371,7 @@ export default function TransactionsCalendarPage() {
 
                 const key = toDateKey(dateObj);
                 const dayTransactions = transactionsByDate[key] || [];
-                const daySpend = dayTransactions.reduce((sum, trx) => sum + (trx.amount || 0), 0);
+                const daySpend = dayTransactions.reduce((sum, trx) => sum + toAmountNumber(trx.amount), 0);
                 const dayAnomalyCount = anomalyCountByDate[key] || 0;
                 const isSelected = key === selectedDateKey;
                 const hasData = dayTransactions.length > 0;
@@ -430,7 +436,7 @@ export default function TransactionsCalendarPage() {
                       {trx.vendor_name || "Unknown Vendor"}
                     </h3>
                     <p className="text-sm font-bold text-primary-accent-dark">
-                      {formatMoney(trx.amount)}
+                      {formatMoney(toAmountNumber(trx.amount))}
                     </p>
                   </div>
 

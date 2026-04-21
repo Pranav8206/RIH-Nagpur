@@ -2,29 +2,8 @@ import Joi from "joi";
 import { Transaction } from "../models/transaction.model.js";
 import { Anomaly } from "../models/anomaly.model.js";
 import { Recommendation } from "../models/recommendation.model.js";
-import { detectAnomalies } from "../services/anomalyService.js";
+import { syncMissingAnomaliesForUser } from "../services/anomalyService.js";
 import { logAction } from "../services/auditService.js";
-
-const syncAnomaliesForUser = async (userId) => {
-  const existingAnomalies = await Anomaly.find({ user_id: userId }).select("transaction_id").lean();
-  const existingTransactionIds = new Set(existingAnomalies.map((anomaly) => anomaly.transaction_id.toString()));
-
-  const transactions = await Transaction.find({
-    user_id: userId,
-    is_deleted: { $ne: true }
-  }).lean();
-
-  const pendingTransactions = transactions.filter(
-    (transaction) => !existingTransactionIds.has(transaction._id.toString())
-  );
-
-  if (pendingTransactions.length === 0) {
-    return 0;
-  }
-
-  const createdAnomalies = await detectAnomalies(pendingTransactions);
-  return createdAnomalies.length;
-};
 
 // Joi Schemas
 export const updateAnomalySchema = Joi.object({
@@ -37,18 +16,9 @@ export const detectAnomaliesFlow = async (req, res) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ success: false, message: "Unauthorized", error: "Missing user ID context" });
 
-    // Step 1: Find all transactions that ALREADY have anomalies to prevent duplicate runs
-    const existingAnomalies = await Anomaly.find({ user_id: userId }).select('transaction_id').lean();
-    const existingTrxIds = existingAnomalies.map(a => a.transaction_id);
+    const syncResult = await syncMissingAnomaliesForUser(userId);
 
-    // Step 2: Query for UNPROCESSED transactions securely avoiding duplicates natively
-    const unprocessedTransactions = await Transaction.find({
-      user_id: userId,
-      _id: { $nin: existingTrxIds },
-      is_deleted: { $ne: true }
-    }).lean();
-
-    if (unprocessedTransactions.length === 0) {
+    if (syncResult.detected === 0) {
       return res.status(200).json({
         success: true,
         detected: 0,
@@ -58,19 +28,15 @@ export const detectAnomaliesFlow = async (req, res) => {
       });
     }
 
-    // Step 3: Run detection engine via Service Layer
-    const createdAnomalies = await detectAnomalies(unprocessedTransactions);
+    const total_risk = syncResult.anomalies.reduce((sum, anomaly) => sum + anomaly.anomaly_score, 0);
 
-    // Calculate aggregated return data metric
-    const total_risk = createdAnomalies.reduce((sum, anomaly) => sum + anomaly.anomaly_score, 0);
-
-    await logAction(userId, "detected", "anomaly_batch", null, { change_to: `Detected ${createdAnomalies.length} new anomalies.` }, "User ran anomaly detection");
+    await logAction(userId, "detected", "anomaly_batch", null, { change_to: `Detected ${syncResult.created} new anomalies.` }, "User ran anomaly detection");
 
     return res.status(201).json({
       success: true,
       data: {
-        detected: unprocessedTransactions.length,
-        created: createdAnomalies.length,
+        detected: syncResult.detected,
+        created: syncResult.created,
         total_risk_score: parseFloat(total_risk.toFixed(2))
       }
     });
@@ -94,14 +60,11 @@ export const getAnomalies = async (req, res) => {
     if (status) query.status = status;
     if (severity) query.severity = severity;
 
-    let total = await Anomaly.countDocuments(query);
-
-    // If the user opens the anomalies page before running detection, automatically
-    // scan the imported transactions once so the page shows meaningful results.
-    if (total === 0 && !status && !severity && pageNum === 1) {
-      await syncAnomaliesForUser(userId);
-      total = await Anomaly.countDocuments(query);
+    if (!status && !severity && pageNum === 1) {
+      await syncMissingAnomaliesForUser(userId);
     }
+
+    const total = await Anomaly.countDocuments(query);
 
     const anomalies = await Anomaly.find(query)
       .sort({ detected_at: -1 })
