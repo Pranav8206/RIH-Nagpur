@@ -11,6 +11,7 @@ const dashboardMetricSchema = new Schema(
     classified_anomalies: { type: Number, default: 0 },
     recommendations_open: { type: Number, default: 0 },
     total_recovered: { type: Number, default: 0 },
+    recovery_potential: { type: Number, default: 0 },
     recovery_rate: { type: Number, default: 0 },
     top_leakage_type: { type: String, default: "None" },
     top_vendor: { type: String, default: "None" },

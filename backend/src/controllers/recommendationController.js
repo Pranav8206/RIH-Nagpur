@@ -61,8 +61,31 @@ const toTitleCase = (value = "") => value
   .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
   .join(" ");
 
+const normalizeTitleKey = (value = "") => value
+  .toString()
+  .toLowerCase()
+  .replace(/[^a-z0-9\s]/g, " ")
+  .replace(/\s+/g, " ")
+  .trim();
+
+const isGenericRecommendationTitle = (value = "") => {
+  const normalized = normalizeTitleKey(value);
+  if (!normalized) return true;
+
+  const blocked = new Set([
+    "recommendation",
+    "review recommendation",
+    "compliance warning issued",
+    "action required",
+    "review this recommendation"
+  ]);
+
+  return blocked.has(normalized);
+};
+
 const buildFriendlyFallbackMetadata = (item) => {
   const vendor = toTitleCase(item.vendor_name || "vendor");
+  const category = toTitleCase(item.category || "spend");
   const amountText = formatCurrency(item.amount || item.estimated_recovery || 0);
   const method = (item.detection_method || "").toLowerCase();
 
@@ -80,8 +103,15 @@ const buildFriendlyFallbackMetadata = (item) => {
     };
   }
 
+  if (method.includes("compliance") || method.includes("policy")) {
+    return {
+      title: `Resolve policy risk in ${category}`,
+      summary: `This transaction may violate policy checks. Verify supporting documents and complete corrective action.`
+    };
+  }
+
   return {
-    title: `Review ${vendor} transaction for savings`,
+    title: `Review ${vendor} ${category} transaction`,
     summary: `A potential saving of about ${amountText} is available. Confirm details and take corrective action.`
   };
 };
@@ -142,6 +172,33 @@ const buildFriendlyMetadataWithGroq = async (items) => {
       finalMap.set(id, {
         title: typeof entry.title === "string" && entry.title.trim() ? entry.title.trim() : fallback.title,
         summary: typeof entry.summary === "string" && entry.summary.trim() ? entry.summary.trim() : fallback.summary
+      });
+    }
+
+    const titleCounts = new Map();
+    for (const meta of finalMap.values()) {
+      const key = normalizeTitleKey(meta?.title || "");
+      if (!key) continue;
+      titleCounts.set(key, (titleCounts.get(key) || 0) + 1);
+    }
+
+    const itemById = new Map(items.map((item) => [String(item.id), item]));
+    for (const [id, meta] of finalMap.entries()) {
+      const normalizedTitle = normalizeTitleKey(meta?.title || "");
+      const isDuplicate = normalizedTitle ? (titleCounts.get(normalizedTitle) || 0) > 1 : false;
+
+      if (!isDuplicate && !isGenericRecommendationTitle(meta?.title || "")) continue;
+
+      const item = itemById.get(id) || { id };
+      const fallback = buildFriendlyFallbackMetadata(item);
+      const disambiguator = toTitleCase(item.vendor_name || item.category || item.detection_method || "").trim();
+      const uniqueTitle = disambiguator && !normalizeTitleKey(fallback.title).includes(normalizeTitleKey(disambiguator))
+        ? `${fallback.title} - ${disambiguator}`
+        : fallback.title;
+
+      finalMap.set(id, {
+        title: uniqueTitle,
+        summary: fallback.summary
       });
     }
 
@@ -501,24 +558,35 @@ export const executeRecommendation = async (req, res) => {
 
     if (!id.match(/^[0-9a-fA-F]{24}$/)) return res.status(400).json({ success: false, message: "Validation Error", error: "Invalid ID format" });
 
-    const recommendation = await Recommendation.findOne({ _id: id, user_id: userId });
-    if (!recommendation) return res.status(404).json({ success: false, message: "Not found", error: "Recommendation not found" });
+    const { actual_recovery, notes } = req.body;
+    const existingRecommendation = await Recommendation.findOne({ _id: id, user_id: userId }).lean();
+    if (!existingRecommendation) {
+      return res.status(404).json({ success: false, message: "Not found", error: "Recommendation not found" });
+    }
 
-    if (recommendation.status !== "Pending") {
+    if (existingRecommendation.status !== "Pending") {
       return res.status(400).json({ success: false, message: "Validation Error", error: "Only Pending recommendations can be executed" });
     }
 
-    const { actual_recovery, notes } = req.body;
-    const originalData = recommendation.toObject();
+    const updateFields = {
+      status: "Executed",
+      executed_by: userId,
+      executed_date: new Date()
+    };
+    if (actual_recovery !== undefined) updateFields.actual_recovery = actual_recovery;
+    if (notes) updateFields.notes = notes;
 
-    recommendation.status = "Executed";
-    recommendation.executed_by = userId;
-    recommendation.executed_date = new Date();
-    if (actual_recovery !== undefined) recommendation.actual_recovery = actual_recovery;
-    if (notes) recommendation.notes = notes;
+    const savedRec = await Recommendation.findOneAndUpdate(
+      { _id: id, user_id: userId, status: "Pending" },
+      { $set: updateFields },
+      { new: true }
+    );
 
-    const savedRec = await recommendation.save();
-    await logAction(userId, "executed", "recommendation", savedRec._id, { change_from: originalData, change_to: savedRec }, "User marked recommendation as Executed");
+    if (!savedRec) {
+      return res.status(400).json({ success: false, message: "Validation Error", error: "Only Pending recommendations can be executed" });
+    }
+
+    await logAction(userId, "executed", "recommendation", savedRec._id, { change_from: existingRecommendation, change_to: savedRec }, "User marked recommendation as Executed");
 
     return res.status(200).json({ success: true, data: savedRec });
   } catch (error) {
@@ -535,21 +603,27 @@ export const rejectRecommendation = async (req, res) => {
 
     if (!id.match(/^[0-9a-fA-F]{24}$/)) return res.status(400).json({ success: false, message: "Validation Error", error: "Invalid ID format" });
 
-    const recommendation = await Recommendation.findOne({ _id: id, user_id: userId });
-    if (!recommendation) return res.status(404).json({ success: false, message: "Not found", error: "Recommendation not found" });
+    const { reason } = req.body;
+    const existingRecommendation = await Recommendation.findOne({ _id: id, user_id: userId }).lean();
+    if (!existingRecommendation) {
+      return res.status(404).json({ success: false, message: "Not found", error: "Recommendation not found" });
+    }
 
-    if (recommendation.status !== "Pending") {
+    if (existingRecommendation.status !== "Pending") {
       return res.status(400).json({ success: false, message: "Validation Error", error: "Only Pending recommendations can be rejected" });
     }
 
-    const { reason } = req.body;
-    const originalData = recommendation.toObject();
+    const savedRec = await Recommendation.findOneAndUpdate(
+      { _id: id, user_id: userId, status: "Pending" },
+      { $set: { status: "Rejected", notes: reason } },
+      { new: true }
+    );
 
-    recommendation.status = "Rejected";
-    recommendation.notes = reason;
+    if (!savedRec) {
+      return res.status(400).json({ success: false, message: "Validation Error", error: "Only Pending recommendations can be rejected" });
+    }
 
-    const savedRec = await recommendation.save();
-    await logAction(userId, "rejected", "recommendation", savedRec._id, { change_from: originalData, change_to: savedRec }, `User rejected recommendation: ${reason}`);
+    await logAction(userId, "rejected", "recommendation", savedRec._id, { change_from: existingRecommendation, change_to: savedRec }, `User rejected recommendation: ${reason}`);
 
     return res.status(200).json({ success: true, data: savedRec });
   } catch (error) {
