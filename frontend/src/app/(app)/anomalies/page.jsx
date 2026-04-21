@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import AnomalyTable from '@/components/anomalies/AnomalyTable';
 import AnomalyFilters from '@/components/anomalies/AnomalyFilters';
 import BulkActions from '@/components/anomalies/BulkActions';
-import { ShieldAlert, RefreshCw } from 'lucide-react';
+import { ShieldAlert, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 
 export default function AnomaliesListPage() {
@@ -52,6 +52,14 @@ export default function AnomaliesListPage() {
       }
   };
 
+  const handleSyncAnomalies = async () => {
+      try {
+          await axiosInstance.post('/anomalies/detect', {});
+      } finally {
+          queryClient.invalidateQueries(['anomalies']);
+      }
+  };
+
   return (
       <div className="min-h-[calc(100vh-64px)] bg-transparent pb-12 selection:bg-primary-accent-light/50 font-sans">
          <main className="max-w-400 mx-auto px-4 sm:px-6 lg:px-8 pt-8">
@@ -64,7 +72,7 @@ export default function AnomaliesListPage() {
                    <p className="text-sm text-text-secondary mt-1">Review flagged algorithmic multi-layer transactions instantly.</p>
                 </div>
                 <button 
-                  onClick={() => queryClient.invalidateQueries(['anomalies'])}
+                                    onClick={handleSyncAnomalies}
                   className="flex items-center text-sm font-medium text-text-secondary bg-surface border border-border-light px-4 py-2 rounded-lg shadow-sm hover:bg-surface-hover transition"
                   disabled={isFetching}
                 >
@@ -76,6 +84,18 @@ export default function AnomaliesListPage() {
                 <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-xl text-error shadow-sm animate-in fade-in">
                    <h4 className="font-semibold text-sm">Failed to Sync Data limits</h4>
                    <p className="text-sm mt-1">{error.message}</p>
+                </div>
+            )}
+
+            {!isLoading && !isError && (data?.data?.length || 0) === 0 && (
+                <div className="mb-6 p-5 rounded-xl border border-amber-200 bg-amber-50 text-amber-900 shadow-sm flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 mt-0.5 text-amber-600 shrink-0" />
+                    <div className="flex-1">
+                        <h4 className="font-semibold text-sm">No anomalies are cached yet</h4>
+                        <p className="text-sm mt-1 text-amber-800">
+                            This page now auto-scans your imported transactions on first load, but if nothing unusual is found you can run detection again with the refresh button.
+                        </p>
+                    </div>
                 </div>
             )}
 

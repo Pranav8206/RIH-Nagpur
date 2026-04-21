@@ -42,15 +42,12 @@ export default function RecommendationDetailView() {
 
     let rec = null;
     let templateContent = null;
-    let classificationData = null;
-
     if (data.data.format === 'email' || data.data.body) {
         rec = data.data; 
         templateContent = rec.body || rec.template_content;
     } else if (data.data.recommendation) {
         rec = data.data.recommendation;
         templateContent = rec?.template_content;
-        classificationData = data.data.classification;
     } else {
         rec = data.data;
         templateContent = rec?.template_content;
@@ -73,7 +70,7 @@ export default function RecommendationDetailView() {
     return (
        <div className="min-h-[calc(100vh-64px)] bg-[#FAFBFD] pb-24 font-sans text-slate-800">
            <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm backdrop-blur-md bg-opacity-95">
-                <div className="max-w-[1200px] mx-auto px-4 py-3.5 flex items-center justify-between">
+                <div className="max-w-300 mx-auto px-4 py-3.5 flex items-center justify-between">
                    <div className="flex items-center space-x-4">
                        <button 
                           onClick={() => router.push('/recommendations')}
@@ -83,7 +80,7 @@ export default function RecommendationDetailView() {
                        </button>
                        <div className="border-l border-gray-200 pl-4">
                            <h1 className="text-xl font-bold tracking-tight flex items-center">
-                               Action Structure Engine Execution Ext Hook Limit <span className="font-mono text-gray-400 font-medium text-[16px] tracking-wider ml-2 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 shadow-sm drop-shadow-sm border-opacity-50 inline-block drop-shadow bg-opacity-50 truncate max-w-[120px] ml-3">#{rec?._id?.slice(-8).toUpperCase() || 'N/A'}</span>
+                              Action Structure Engine Execution Ext Hook Limit <span className="font-mono text-gray-400 font-medium text-[16px] tracking-wider ml-2 bg-gray-50 px-2 py-0.5 rounded border border-gray-100 shadow-sm border-opacity-50 inline-block bg-opacity-50 truncate max-w-30">#{rec?._id?.slice(-8).toUpperCase() || 'N/A'}</span>
                            </h1>
                        </div>
                    </div>
@@ -100,15 +97,15 @@ export default function RecommendationDetailView() {
                 </div>
            </div>
 
-           <main className="max-w-[1200px] mx-auto px-4 pt-8 animate-in fade-in slide-in-from-bottom-4">
+           <main className="max-w-300 mx-auto px-4 pt-8 animate-in fade-in slide-in-from-bottom-4">
                  <RecommendationDetailCard recommendation={rec} />
                  
                  <div className="mt-8 bg-white p-2 rounded-xl border border-gray-200 shadow-sm flex flex-col pt-3">
                       <div className="flex p-2 gap-2 border-b border-gray-100 mb-4 bg-gray-50/50 rounded-t-xl px-4 py-3 mx-2">
-                          <button onClick={()=>setTemplateType('email')} className={`flex items-center justify-center flex-1 py-3 hover:bg-white rounded-lg text-sm font-bold tracking-wider uppercase transition shadow-sm border border-transparent ${templateType === 'email' ? 'bg-white text-indigo-600 border-gray-200 shadow' : 'text-gray-500 hover:shadow-sm'}`}>
+                          <button onClick={()=>setTemplateType('email')} className={`flex items-center justify-center flex-1 py-3 hover:bg-white rounded-lg text-sm font-bold tracking-wider uppercase transition border border-transparent ${templateType === 'email' ? 'bg-white text-indigo-600 border-gray-200 shadow-sm' : 'text-gray-500 hover:shadow-sm'}`}>
                              <Mail className={`w-4 h-4 mr-2 ${templateType==='email' ? 'text-indigo-500' : 'opacity-70'}`} /> Layout Export Map Config Check Object Vector Drop Target Yield
                           </button>
-                          <button onClick={()=>setTemplateType('pdf')} className={`flex items-center justify-center flex-1 py-3 hover:bg-white rounded-lg text-sm font-bold tracking-wider uppercase transition border border-transparent ${templateType === 'pdf' ? 'bg-white text-emerald-600 border-gray-200 shadow shadow-sm' : 'text-gray-500 hover:shadow-sm'}`}>
+                          <button onClick={()=>setTemplateType('pdf')} className={`flex items-center justify-center flex-1 py-3 hover:bg-white rounded-lg text-sm font-bold tracking-wider uppercase transition border border-transparent ${templateType === 'pdf' ? 'bg-white text-emerald-600 border-gray-200 shadow-sm' : 'text-gray-500 hover:shadow-sm'}`}>
                              <FileText className={`w-4 h-4 mr-2 ${templateType==='pdf' ? 'text-emerald-500' : 'opacity-70'}`} /> Legal Node Object Layout Matrix Exec Loop Block Yield Code Return Drop
                           </button>
                       </div>

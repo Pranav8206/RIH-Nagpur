@@ -2,7 +2,7 @@
 import React from 'react';
 import { PlayCircle, ShieldCheck, FileDown, Mail, ArrowRight, Zap, Target } from 'lucide-react';
 
-export default function SidebarActions({ onRunDetection, onRunClassification, isProcessing }) {
+export default function SidebarActions({ onRunDetection, onGenerateRecommendations, isProcessing }) {
     return (
        <div className="bg-surface p-6 rounded-xl border border-border-light shadow-sm flex flex-col h-full bg-opacity-70 bg-clip-padding backdrop-filter backdrop-blur-sm">
            <div className="mb-6">
@@ -23,14 +23,14 @@ export default function SidebarActions({ onRunDetection, onRunClassification, is
                        <PlayCircle className="w-4 h-4 opacity-40 group-hover:opacity-100 group-hover:scale-110 transition-all" />
                    </button>
 
-                   <button 
-                      onClick={onRunClassification}
+                         <button 
+                             onClick={onGenerateRecommendations}
                       disabled={isProcessing}
                       className="w-full flex items-center justify-between px-4 py-3 bg-surface hover:bg-emerald-50 text-text-secondary hover:text-emerald-700 rounded-lg border border-border-light hover:border-emerald-300 transition-all group shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                        <span className="flex items-center text-sm font-semibold">
                           <ShieldCheck className="w-4 h-4 mr-2.5 text-primary-accent" /> 
-                          Apply Taxonomies
+                                  Generate Recommendations
                        </span>
                        <ArrowRight className="w-4 h-4 opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                    </button>

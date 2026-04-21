@@ -43,7 +43,7 @@ export default function RecommendationDetailCard({ recommendation }) {
                             <ul className="space-y-2.5">
                                {recommendation.action_steps?.map((step, idx) => (
                                   <li key={idx} className="flex items-start text-sm text-text-secondary bg-surface-hover p-3 rounded-lg border border-border-light shadow-sm font-medium tracking-wide">
-                                      <div className="w-5 h-5 rounded bg-primary-accent-light/50 text-primary-accent-dark flex items-center justify-center text-[10px] font-bold border border-primary-accent-light mr-3 flex-shrink-0 mt-0.5 shadow-sm">
+                                      <div className="w-5 h-5 rounded bg-primary-accent-light/50 text-primary-accent-dark flex items-center justify-center text-[10px] font-bold border border-primary-accent-light mr-3 shrink-0 mt-0.5 shadow-sm">
                                          {idx + 1}
                                       </div>
                                       <span className="leading-snug">{step}</span>

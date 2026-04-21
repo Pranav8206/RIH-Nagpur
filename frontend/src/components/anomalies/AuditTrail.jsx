@@ -2,20 +2,60 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Clock, User, ArrowRight } from 'lucide-react';
+import { useAppContext } from '@/context/AppContext';
 
 export default function AuditTrail({ entityId }) {
-    // Isolated Audit mapping structure pulling localized component renders 
+    const { axiosInstance } = useAppContext();
+
     const { data, isLoading } = useQuery({
        queryKey: ['audit_logs', entityId],
        queryFn: async () => {
-           if(!entityId) return [];
-           
-           // Generating Mocked UI flow explicitly to match UI components 
-           // since explicit backend API mappings for GET general /api/audit_logs array extraction lacked distinct implementation requests
-           return [
-               { _id: '1', action: 'Matrix Pipeline Identified', performed_by: 'ML Matrix Engine System', timestamp: new Date(Date.now() - 86400000).toISOString(), details: { reason: "Standard statistical deviation flagged accurately via internal deviation hooks." } },
-               { _id: '2', action: 'Status Pipeline Advanced', performed_by: 'johndoe_sysadmin@internal.vault', timestamp: new Date(Date.now() - 3600000).toISOString(), details: { from: "Flagged Extracted", to: "Under Initial Review" } }
-           ];
+           if (!entityId) return [];
+
+           const { data } = await axiosInstance.get(`/anomalies/${entityId}`);
+           const payload = data?.data;
+           if (!payload) return [];
+
+           const events = [];
+
+           if (payload.transaction) {
+               events.push({
+                   _id: `transaction-${payload.transaction._id}`,
+                   action: 'Transaction Imported',
+                   performed_by: payload.transaction.vendor_name || 'Imported transaction',
+                   timestamp: payload.transaction.created_at || payload.transaction.date || new Date().toISOString(),
+                   details: {
+                       reason: `Amount ${payload.transaction.amount || 0} recorded from import.`
+                   }
+               });
+           }
+
+           if (payload.anomaly) {
+               events.push({
+                   _id: `anomaly-${payload.anomaly._id}`,
+                   action: 'Anomaly Detected',
+                   performed_by: 'Anomaly detector',
+                   timestamp: payload.anomaly.detected_at || payload.anomaly.created_at || new Date().toISOString(),
+                   details: {
+                       reason: payload.anomaly.reason_description || payload.anomaly.detection_method || 'Flagged from transaction data.'
+                   }
+               });
+           }
+
+           const recommendation = payload.recommendations?.[0];
+           if (recommendation) {
+               events.push({
+                   _id: `recommendation-${recommendation._id}`,
+                   action: 'Recommendation Created',
+                   performed_by: 'Recommendation engine',
+                   timestamp: recommendation.created_at || new Date().toISOString(),
+                   details: {
+                       reason: recommendation.action_description || recommendation.recommendation_type || 'Generated from anomaly output.'
+                   }
+               });
+           }
+
+           return events.sort((left, right) => new Date(left.timestamp) - new Date(right.timestamp));
        }
     });
 
@@ -37,7 +77,7 @@ export default function AuditTrail({ entityId }) {
                    <div className="relative border-l-2 border-border-light ml-3 space-y-6">
                        {data?.map((log) => (
                            <div key={log._id} className="relative pl-6">
-                               <div className="absolute w-4 h-4 bg-surface border-[3px] border-blue-400 rounded-full -left-[9px] top-0 shadow-sm"></div>
+                               <div className="absolute w-4 h-4 bg-surface border-[3px] border-blue-400 rounded-full -left-2.25 top-0 shadow-sm"></div>
                                <div className="flex justify-between items-start mb-1">
                                     <h4 className="text-sm font-bold text-text-primary tracking-tight">{log.action}</h4>
                                     <span className="text-[10px] uppercase font-bold text-text-tertiary tracking-widest">{new Date(log.timestamp).toLocaleString(undefined, {hour:'numeric', minute:'2-digit', month:'short', day:'numeric'})}</span>

@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { ShieldCheck, ArrowRight, Zap } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 
-export default function RecommendationPanel({ recommendation, classificationId, currentClassification }) {
+export default function RecommendationPanel({ recommendation, anomalyId }) {
     const queryClient = useQueryClient();
     const [loading, setLoading] = useState(false);
     const { axiosInstance } = useAppContext();
@@ -13,7 +13,8 @@ export default function RecommendationPanel({ recommendation, classificationId, 
         setLoading(true);
         try {
             await axiosInstance.post(`/recommendations/generate`);
-            await queryClient.invalidateQueries(['anomaly']); 
+            await queryClient.invalidateQueries(['anomaly', anomalyId]); 
+            await queryClient.invalidateQueries(['recommendations']);
         } catch(e) {
             alert('Recommendation Logic API Error boundaries.');
         } finally {
@@ -77,11 +78,11 @@ export default function RecommendationPanel({ recommendation, classificationId, 
                        <ShieldCheck className="w-8 h-8 text-emerald-200 mb-3" />
                        <h4 className="text-sm font-semibold text-text-secondary">Missing Recovery Template</h4>
                        <p className="text-xs text-text-tertiary mt-1 max-w-62.5 mb-5 leading-relaxed tracking-wide">
-                           {currentClassification ? "Classification found natively. Trigger generation routines to parse recovery structures seamlessly." : "Entity must be Classified successfully before Action templates can compile."}
+                                                     Recommendation generation now runs directly from anomalies and imported transactions.
                        </p>
                        <button 
                          onClick={handleGenerate}
-                         disabled={loading || !currentClassification}
+                                                 disabled={loading || !anomalyId}
                          className="flex items-center text-xs font-bold text-white bg-primary-accent px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                        >
                           {loading ? 'Compiling Code...' : (

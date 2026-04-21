@@ -6,7 +6,6 @@ import { ChevronLeft, ShieldAlert } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 
 import AnomalyDetailCard from '@/components/anomalies/AnomalyDetailCard';
-import ClassificationPanel from '@/components/anomalies/ClassificationPanel';
 import RecommendationPanel from '@/components/anomalies/RecommendationPanel';
 import AuditTrail from '@/components/anomalies/AuditTrail';
 import RelatedTransactions from '@/components/anomalies/RelatedTransactions';
@@ -49,12 +48,12 @@ export default function AnomalyDetailView() {
     }
 
     // Explode boundaries natively bypassing complex tree routing limits
-    const { anomaly, transaction, classifications, recommendations } = data.data;
+    const { anomaly, transaction, recommendations } = data.data;
 
     return (
        <div className="min-h-[calc(100vh-64px)] bg-[#FAFBFD] pb-24 selection:bg-blue-100 font-sans">
            <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm backdrop-blur-md bg-opacity-95">
-                <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
+                <div className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between">
                    <div className="flex items-center space-x-4">
                        <button 
                           onClick={() => router.push('/anomalies')}
@@ -80,18 +79,17 @@ export default function AnomalyDetailView() {
                 </div>
            </div>
 
-           <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+           <main className="max-w-350 mx-auto px-4 sm:px-6 lg:px-8 pt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                    
                    <div className="lg:col-span-8 space-y-6">
                        <AnomalyDetailCard anomaly={anomaly} transaction={transaction} />
                        
                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <ClassificationPanel classification={classifications?.[0]} anomalyId={id} />
-                           <RecommendationPanel recommendation={recommendations?.[0]} classificationId={classifications?.[0]?._id} currentClassification={classifications?.[0]} />
+                           <RecommendationPanel recommendation={recommendations?.[0]} anomalyId={id} />
                        </div>
 
-                       <AuditTrail entityId={id} anomalyId={id} classificationId={classifications?.[0]?._id} />
+                       <AuditTrail entityId={id} anomalyId={id} />
                    </div>
                    
                    <div className="lg:col-span-4 space-y-6">

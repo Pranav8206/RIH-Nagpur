@@ -24,11 +24,18 @@ export const detectAnomalies = async (transactions) => {
   const anomaliesToCreate = [];
   const amounts = transactions.map(t => t.amount);
   const { mean, stdDev } = calculateStats(amounts);
+  const sortedAmounts = [...amounts].sort((a, b) => a - b);
+  const percentile90 = sortedAmounts[Math.floor(sortedAmounts.length * 0.9)] ?? 0;
 
   // Use a map to aggressively detect duplicates (same vendor, same amount, same rough date)
   const groupedKeys = new Map();
+  const vendorCounts = new Map();
 
   for (const trx of transactions) {
+    const vendorKey = (trx.vendor_name || "").toLowerCase();
+    vendorCounts.set(vendorKey, (vendorCounts.get(vendorKey) || 0) + 1);
+    const vendorOccurrences = vendorCounts.get(vendorKey);
+
     // 1. DUPLICATE DETECTION LOGIC
     // We assume exact amount, vendor and date constitutes a high-risk duplicate
     const dateStr = new Date(trx.date).toISOString().split('T')[0]; 
@@ -55,10 +62,10 @@ export const detectAnomalies = async (transactions) => {
     if (stdDev > 0) {
       const zScore = Math.abs((trx.amount - mean) / stdDev);
       
-      // Values with a zScore > 2.5 are significantly outside normal variance
-      if (zScore > 2.5) {
+      // Values with a zScore > 2 are significantly outside normal variance
+      if (zScore > 2) {
         // Normalize anomalous Z-score to a 0-1 scale (capped at 1)
-        const normalizedScore = Math.min(1, Math.max(0, (zScore - 2.5) / 5 + 0.5));
+        const normalizedScore = Math.min(1, Math.max(0, (zScore - 2) / 4 + 0.5));
         
         anomaliesToCreate.push({
           user_id: trx.user_id,
@@ -70,7 +77,37 @@ export const detectAnomalies = async (transactions) => {
           reason_description: `Amount deviates heavily from typical department average with a Z-score of ${zScore.toFixed(2)}.`,
           status: "New"
         });
+        continue;
       }
+    }
+
+    // 3. HIGH-SPEND AND RECURRENCE HEURISTICS
+    // These help ensure realistic expense datasets surface meaningful flagged records.
+    if (transactions.length >= 20 && trx.amount >= percentile90 && trx.amount > mean) {
+      anomaliesToCreate.push({
+        user_id: trx.user_id,
+        transaction_id: trx._id,
+        anomaly_score: 0.72,
+        detection_type: "Behavioral",
+        detection_method: "Top Spend Percentile",
+        severity: "Medium",
+        reason_description: "Transaction sits in the highest spend band for the current user dataset.",
+        status: "New"
+      });
+      continue;
+    }
+
+    if (vendorOccurrences >= 5 && trx.amount >= mean * 0.75) {
+      anomaliesToCreate.push({
+        user_id: trx.user_id,
+        transaction_id: trx._id,
+        anomaly_score: 0.65,
+        detection_type: "Behavioral",
+        detection_method: "Recurring Vendor Pattern",
+        severity: "Low",
+        reason_description: "Vendor appears unusually often across the imported transaction set.",
+        status: "New"
+      });
     }
   }
 

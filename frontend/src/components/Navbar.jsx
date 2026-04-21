@@ -30,7 +30,7 @@ const Navbar = () => {
 
   // Move the pathname check AFTER all hooks (not before return)
   const shouldHideNavbar = pathname?.match(
-    /^\/(dashboard|anomalies|classifications|recommendations|import|transactions)/,
+    /^\/(dashboard|anomalies|recommendations|import|transactions)/,
   );
 
   useEffect(() => {

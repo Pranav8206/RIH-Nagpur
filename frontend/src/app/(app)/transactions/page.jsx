@@ -73,7 +73,6 @@ export default function TransactionsCalendarPage() {
   const [transactionsByDate, setTransactionsByDate] = useState({});
   const [anomalyCountByDate, setAnomalyCountByDate] = useState({});
   const [anomalyByTransaction, setAnomalyByTransaction] = useState({});
-  const [classificationByTransaction, setClassificationByTransaction] = useState({});
   const [monthTotal, setMonthTotal] = useState(0);
   const [monthCount, setMonthCount] = useState(0);
   const [uniqueCategories, setUniqueCategories] = useState([]);
@@ -116,13 +115,9 @@ export default function TransactionsCalendarPage() {
         return acc;
       }, {});
 
-      const [anomalyRes, classificationRes] = await Promise.all([
-        axiosInstance.get("/anomalies?limit=5000&page=1"),
-        axiosInstance.get("/classifications?limit=5000&page=1"),
-      ]);
+      const anomalyRes = await axiosInstance.get("/anomalies?limit=5000&page=1");
 
       const anomalies = anomalyRes?.data?.data || [];
-      const classifications = classificationRes?.data?.data || [];
 
       const anomalyMap = {};
       const anomalyDateCounts = {};
@@ -141,22 +136,6 @@ export default function TransactionsCalendarPage() {
         }
       });
 
-      const classificationByAnomaly = classifications.reduce((acc, classification) => {
-        if (!classification?.anomaly_id) return acc;
-        if (!acc[classification.anomaly_id]) {
-          acc[classification.anomaly_id] = classification;
-        }
-        return acc;
-      }, {});
-
-      const classificationMap = {};
-      Object.entries(anomalyMap).forEach(([transactionId, anomaly]) => {
-        const classification = classificationByAnomaly[anomaly._id];
-        if (classification) {
-          classificationMap[transactionId] = classification;
-        }
-      });
-
       const grouped = rows.reduce((acc, trx) => {
         const key = toDateKey(trx.date);
         if (!key) return acc;
@@ -172,7 +151,6 @@ export default function TransactionsCalendarPage() {
       setTransactionsByDate(grouped);
       setAnomalyCountByDate(anomalyDateCounts);
       setAnomalyByTransaction(anomalyMap);
-      setClassificationByTransaction(classificationMap);
       setMonthTotal(rows.reduce((sum, trx) => sum + (trx.amount || 0), 0));
       setMonthCount(rows.length);
 
@@ -199,7 +177,6 @@ export default function TransactionsCalendarPage() {
       setTransactionsByDate({});
       setAnomalyCountByDate({});
       setAnomalyByTransaction({});
-      setClassificationByTransaction({});
       setMonthTotal(0);
       setMonthCount(0);
       setUniqueCategories([]);
@@ -370,8 +347,8 @@ export default function TransactionsCalendarPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <section className="xl:col-span-2 bg-surface rounded-xl border border-border-light shadow-sm p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <section className="lg:col-span-8 bg-surface rounded-xl border border-border-light shadow-sm p-4">
             <div className="grid grid-cols-7 gap-2 mb-2">
               {weekdayHeaders.map((day) => (
                 <div key={day} className="text-center text-xs font-bold uppercase tracking-wide text-text-tertiary py-2">
@@ -429,7 +406,7 @@ export default function TransactionsCalendarPage() {
             </div>
           </section>
 
-          <section className="bg-surface rounded-xl border border-border-light shadow-sm p-4">
+          <section className="bg-surface rounded-xl border border-border-light shadow-sm p-4 lg:col-span-4 lg:sticky lg:top-6">
             <h2 className="text-sm font-bold uppercase tracking-wide text-text-tertiary mb-3">
               {selectedDateKey ? `Transactions on ${selectedDateKey}` : "Daily Transactions"}
             </h2>
@@ -478,18 +455,6 @@ export default function TransactionsCalendarPage() {
                       </span>
                     )}
 
-                    {classificationByTransaction[trx._id] ? (
-                      <Link
-                        href={`/classifications/${classificationByTransaction[trx._id]._id}`}
-                        className="text-xs font-semibold px-2.5 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
-                      >
-                        View Classification
-                      </Link>
-                    ) : (
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded border border-gray-200 bg-gray-50 text-gray-500">
-                        No Classification
-                      </span>
-                    )}
                   </div>
                 </article>
               ))}

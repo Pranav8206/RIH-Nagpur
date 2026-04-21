@@ -3,6 +3,7 @@ import { protect } from "../middleware/auth.middleware.js";
 import {
   generateFlow,
   getRecommendations,
+  getFriendlyRecommendationSummary,
   getRecommendationById,
   executeRecommendation,
   rejectRecommendation,
@@ -23,6 +24,7 @@ router.use(protect);
 
 router.post("/generate", generateFlow);
 router.get("/", getRecommendations);
+router.get("/summary", getFriendlyRecommendationSummary);
 router.get("/:id", getRecommendationById);
 router.patch("/:id/execute", validateRequest(executeRecommendationSchema, "body"), executeRecommendation);
 router.patch("/:id/reject", validateRequest(rejectRecommendationSchema, "body"), rejectRecommendation);

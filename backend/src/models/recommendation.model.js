@@ -3,7 +3,7 @@ import mongoose, { Schema, model } from "mongoose";
 const recommendationSchema = new Schema(
   {
     user_id: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    classification_id: { type: Schema.Types.ObjectId, ref: "Classification", required: true },
+    anomaly_id: { type: Schema.Types.ObjectId, ref: "Anomaly", required: true },
     recommendation_type: { type: String, required: true },
     action_template: { type: String, default: "" },
     estimated_recovery: { type: Number, min: 0, default: 0 },
@@ -24,7 +24,7 @@ const recommendationSchema = new Schema(
   }
 );
 
-recommendationSchema.index({ classification_id: 1 });
+recommendationSchema.index({ anomaly_id: 1 });
 recommendationSchema.index({ user_id: 1, status: 1 });
 
 // Virtuals
